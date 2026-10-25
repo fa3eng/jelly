@@ -1,0 +1,9 @@
+{
+  "id": "aula",
+  "name": "Aula",
+  "version": "0.1.0",
+  "minAppVersion": "1.5.0",
+  "description": "A local-first knowledge notebook for exploring your notes, generating practice questions, and reviewing what you learn.",
+  "author": "Aula contributors",
+  "isDesktopOnly": true
+}

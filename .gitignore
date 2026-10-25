@@ -1,0 +1,23 @@
+node_modules/
+dist/
+.vite/
+.vite-temp/
+.superpowers/
+.DS_Store
+.obsidian/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+
+**/.aula/
+
+# Public documentation is opt-in. Local tutorials, plans and drafts stay on disk.
+/docs/*
+!/docs/architecture/
+/docs/architecture/*
+!/docs/architecture/current-runtime.md
+!/docs/architecture/decisions/
+/docs/architecture/decisions/*
+!/docs/architecture/decisions/0001-monorepo-and-toolchain.md
+!/docs/architecture/decisions/0002-contract-rpc.md

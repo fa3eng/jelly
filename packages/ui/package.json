@@ -1,0 +1,16 @@
+{
+  "name": "@aula/ui",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@aula/domain": "workspace:*",
+    "radix-ui": "1.6.7",
+    "react": "19.3.0"
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0"
+  }
+}

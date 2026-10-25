@@ -1,0 +1,24 @@
+{
+  "name": "aula",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vp -C apps/obsidian-plugin run dev",
+    "build": "pnpm agent-service:build && vp -C apps/obsidian-plugin run build",
+    "agent-service:dev": "node --import tsx --watch apps/agent-service/src/index.ts",
+    "agent-service:build": "pnpm --filter @aula/agent-service build",
+    "test": "vitest run",
+    "check": "vp check",
+    "format": "vp fmt"
+  },
+  "devDependencies": {
+    "tsx": "4.23.15",
+    "vite-plus": "0.3.3",
+    "vitest": "4.1.11"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "packageManager": "pnpm@10.25.0"
+}

@@ -1,0 +1,14 @@
+{
+  "name": "@aula/agent-runtime",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@aula/domain": "workspace:*",
+    "effect": "4.0.5",
+    "openai": "^7.25.0",
+    "zod": "4.6.7"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "name": "@aula/obsidian-plugin",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "NODE_ENV=development vp build --watch --mode development --outDir ../../example/demo-vault/.obsidian/plugins/aula",
+    "build": "vp build"
+  },
+  "dependencies": {
+    "@aula/contracts": "workspace:*",
+    "@aula/domain": "workspace:*",
+    "@aula/ui": "workspace:*",
+    "@orpc/client": "1.15.7",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "20.19.0",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.1",
+    "obsidian": "1.12.3"
+  }
+}
