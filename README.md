@@ -1,5 +1,41 @@
 # Jelly
 
+Jelly is a desktop Obsidian AI assistant named after the author's cat. Chat with your notes, read Markdown and text-based PDFs, and ask the assistant to create or edit Markdown files in your vault.
+
+## Features
+
+- Streaming conversations with Markdown replies and local conversation history.
+- File tools limited to the current vault, with path and file-type checks.
+- Local text extraction from PDFs; scanned PDFs need OCR elsewhere.
+- Markdown creation, version-checked editing, and deletion when requested.
+- An independent Agent Service process using Obsidian's bundled runtime; users do not need to install Node.js separately.
+
+## Install and configure
+
+Download the ZIP from the [latest release](https://github.com/fa3eng/jelly/releases/latest). Extract its `jelly` folder into `<vault>/.obsidian/plugins/`, enable Jelly under **Settings → Community plugins**, then open **Settings → Jelly**.
+
+Enter your own API key, API base URL and model ID, then choose **Save and start** (currently labeled **保存并启动**). The default endpoint is `https://api.deepseek.com` and the default model is `deepseek-flash`. Open Jelly using the command palette and send a message. The interface is currently in Chinese.
+
+Jelly requires Obsidian 1.11.4 or later and a desktop installer with Node 20.19 or later. The packaged service has been tested on macOS with Electron 43.3.0. Windows and Linux have not yet been validated. If the app reports an old runtime, update the desktop installer, not just the in-app JavaScript version.
+
+## Privacy, costs and file access
+
+Your API key is stored through Obsidian SecretStorage. The endpoint and model are stored in the plugin configuration. Conversations, including tool results, are stored locally in `<vault>/.jelly/sessions/`.
+
+Model requests send conversation context and any file content used by the assistant to the provider you configure. The provider may require an account and charge usage fees; review its data policies before using private notes. Jelly's local service listens only on `127.0.0.1` and uses a random launch token for plugin requests.
+
+The desktop service uses Node filesystem APIs to read and write files within the configured vault, rather than the Obsidian Vault API. File deletion is permanent: this version has no per-operation confirmation dialog, trash integration or undo. Back up your vault before using write tools. The development environment can explicitly configure external directories; the installed plugin fixes its file-tool scope to the current vault.
+
+## Development
+
+Use Node.js 20.19+ and pnpm 10. Run `pnpm install`, then `pnpm run dev` for the demo vault or `pnpm build` for the three production plugin files. `pnpm check` and `pnpm test` run local validation without model credentials. See the Chinese guide below for environment setup and release commands.
+
+The project uses the [MIT license](LICENSE). Bundled dependency licenses are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and retained in the plugin bundle.
+
+---
+
+## 中文使用与开发指南
+
 Jelly 是一个桌面端 Obsidian AI 助手，支持围绕本地 Markdown 资料进行对话。
 
 ## 功能
