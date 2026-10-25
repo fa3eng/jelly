@@ -11,7 +11,7 @@ export class JellySettingTab extends PluginSettingTab {
 
   display(): void {
     this.containerEl.empty();
-    new Setting(this.containerEl).setName('Jelly').setHeading();
+    new Setting(this.containerEl).setName('模型服务').setHeading();
     this.containerEl.createEl('p', {
       text: '填写模型服务后即可使用。Jelly 的文件工具仅操作当前 Vault，会话自动保存在本地。',
     });
