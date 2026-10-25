@@ -5,6 +5,8 @@ on:
   workflow_dispatch:
 permissions:
   contents: write
+  id-token: write
+  attestations: write
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -18,8 +20,16 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm check
       - run: pnpm test
-      - run: pnpm build
+      - run: pnpm build:verify
       - run: pnpm release:prepare
+      - name: Attest release assets
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: actions/attest@v4
+        with:
+          subject-path: |
+            dist/release/main.js
+            dist/release/styles.css
+            dist/release/manifest.json
       - name: Validate tag and create a draft release
         if: startsWith(github.ref, 'refs/tags/')
         env:

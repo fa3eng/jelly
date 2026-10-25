@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { spawn } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
@@ -10,6 +10,8 @@ const processModulePromise = import('./process').catch(() => null);
 const tsxLoader = createRequire(import.meta.url).resolve('tsx');
 
 describe('Agent Service process manager', () => {
+  beforeEach(() => vi.stubGlobal('window', globalThis));
+  afterEach(() => vi.unstubAllGlobals());
   it.each([false, true])('starts and stops the real Node service (watch=%s)', async (watch) => {
     const processModule = await processModulePromise;
     expect(processModule).not.toBeNull();

@@ -138,11 +138,16 @@ export default class JellyPlugin extends Plugin {
     return operation;
   }
 
-  async onunload(): Promise<void> {
+  onunload(): void {
     this.unloaded = true;
-    await this.serviceChange.catch(() => {});
-    await this.agentService?.stop();
-    this.agentService = undefined;
+    void this.serviceChange
+      .catch(() => {})
+      .then(async () => {
+        const service = this.agentService;
+        this.agentService = undefined;
+        await service?.stop();
+      })
+      .catch(() => new Notice('Jelly 服务停止失败，请重新启动 Obsidian。'));
   }
 
   async openJellyView(): Promise<void> {

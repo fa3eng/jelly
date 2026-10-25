@@ -1,12 +1,13 @@
 {
   "name": "jelly",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "private": true,
   "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "vp -C apps/obsidian-plugin run dev",
-    "build": "pnpm agent-service:build && vp -C apps/obsidian-plugin run build",
+    "build": "node scripts/build.mjs",
+    "build:verify": "node scripts/check-reproducible-build.mjs",
     "agent-service:dev": "node --import tsx --watch apps/agent-service/src/index.ts",
     "agent-service:build": "pnpm --filter @jelly/agent-service build",
     "test": "vitest run",

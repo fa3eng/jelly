@@ -60,6 +60,8 @@ export function assertHostNodeVersion(version: string): void {
 /** 只在 Obsidian 桌面宿主中调用；不静默退回外部 Node。 */
 export function getHostUtilityProcess(entry: string): UtilityProcessModule {
   assertHostNodeVersion(process.versions.node);
+  // Use the host-provided CommonJS loader. Node's ESM resolver/createRequire cannot
+  // resolve Obsidian's injected Electron module from the installed plugin folder.
   const remote = require('@electron/remote') as {
     require(id: 'electron'): { utilityProcess?: UtilityProcessModule };
     require(id: string): unknown;

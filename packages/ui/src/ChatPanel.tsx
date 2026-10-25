@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type SyntheticEvent, type ReactNode } from 'react';
 import type { AssistantRunStatus, ChatMessage } from '@jelly/domain';
 import { Dialog } from './Dialog';
 import { ChatIcon } from './ChatIcon';
@@ -48,7 +48,7 @@ export function ChatPanel({
   }, []);
 
   /** 表单提交与 Enter 共用入口；忙碌或只有空白时不发送。 */
-  function handleSubmit(event: FormEvent<HTMLFormElement>): void {
+  function handleSubmit(event: SyntheticEvent<HTMLFormElement>): void {
     event.preventDefault();
     const prompt = draft.trim();
     if (!prompt || isBusy) return;
@@ -125,6 +125,7 @@ export function ChatPanel({
                 key: event.key,
                 shiftKey: event.shiftKey,
                 isComposing: event.nativeEvent.isComposing,
+                // Keep the 229 IME fallback: some confirmation events report isComposing=false.
                 keyCode: event.nativeEvent.keyCode,
               })
             ) {

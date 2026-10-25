@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { spawn, type ChildProcess } from 'node:child_process';
 import { EventEmitter, once } from 'node:events';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -12,6 +12,8 @@ const utility = {
 };
 
 describe('utility process lifecycle adapter', () => {
+  beforeEach(() => vi.stubGlobal('window', globalThis));
+  afterEach(() => vi.unstubAllGlobals());
   it.each(['18.20.8', '20.18.3', 'invalid'])(
     'rejects an unsupported embedded Node %s',
     (version) => {

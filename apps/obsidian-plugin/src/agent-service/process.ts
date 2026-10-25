@@ -45,12 +45,12 @@ function waitForExit(child: ServiceChild, timeoutMs: number): Promise<void> {
   if (child.exitCode !== null || child.signalCode !== null) return Promise.resolve();
   return new Promise((resolve, reject) => {
     const exited = () => {
-      clearTimeout(timer);
+      window.clearTimeout(timer);
       resolve();
     };
-    let timer = setTimeout(() => {
+    let timer = window.setTimeout(() => {
       child.kill('SIGKILL');
-      timer = setTimeout(() => {
+      timer = window.setTimeout(() => {
         child.removeListener('exit', exited);
         reject(new Error('Agent Service did not exit after forced shutdown'));
       }, 1_000);
@@ -132,7 +132,7 @@ export async function startAgentService(
       } catch {
         // The service may still be binding its loopback port.
       }
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await new Promise((resolve) => window.setTimeout(resolve, 100));
     }
 
     await stopChild(child);
