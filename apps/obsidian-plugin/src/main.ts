@@ -39,7 +39,7 @@ export default class JellyPlugin extends Plugin {
           () => this.openSettings(),
         ),
     );
-    this.addCommand({ id: 'open-jelly', name: 'Open Jelly', callback: () => this.openJellyView() });
+    this.addCommand({ id: 'open', name: 'Open', callback: () => this.openJellyView() });
     await this.restartService().catch(() => {
       /* Settings remain available after a startup failure. */
     });
@@ -95,7 +95,7 @@ export default class JellyPlugin extends Plugin {
         }
         const pluginDirectory = join(
           this.vaultDirectory(),
-          this.manifest.dir ?? join('.obsidian', 'plugins', this.manifest.id),
+          this.manifest.dir ?? join(this.app.vault.configDir, 'plugins', this.manifest.id),
         );
         try {
           const environment = apiKey

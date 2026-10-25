@@ -21,8 +21,7 @@ export function MarkdownMessage({
     const target = container.current;
     if (!target) return;
     const parent = new Component();
-    const rendered = document.createElement('div');
-    rendered.className = 'markdown-rendered';
+    const rendered = createDiv({ cls: 'markdown-rendered' });
     let active = true;
     parent.load();
     // 在独立节点渲染，旧请求即使晚完成，也不能覆盖更新后的回复。

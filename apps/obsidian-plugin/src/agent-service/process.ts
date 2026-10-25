@@ -94,8 +94,8 @@ export async function startAgentService(
         });
     const baseUrl = `http://127.0.0.1:${port}`;
     let spawnError: Error | undefined;
-    child.once('error', (error) => {
-      spawnError = error;
+    child.once('error', (error: unknown) => {
+      spawnError = error instanceof Error ? error : new Error('Agent Service spawn failed');
     });
     let exited = false;
     child.once('exit', (code, signal) => {

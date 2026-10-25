@@ -73,7 +73,7 @@ JELLY_SESSION_DIRECTORY=/absolute/path/to/session-directory
 pnpm run dev
 ```
 
-开发构建会持续写入 `example/demo-vault/.obsidian/plugins/jelly/`。在 Obsidian 中将 `example/demo-vault/` 作为 Vault 打开，到 **Settings → Community plugins** 启用 Jelly，然后运行命令 **Open Jelly**。
+开发构建会持续写入 `example/demo-vault/.obsidian/plugins/jelly/`。在 Obsidian 中将 `example/demo-vault/` 作为 Vault 打开，到 **Settings → Community plugins** 启用 Jelly，然后运行命令 **Jelly: Open**。
 
 源码重新构建后，在 Obsidian 命令面板运行 **Reload app without saving** 加载更新；修改 manifest 后重启 Obsidian。
 
