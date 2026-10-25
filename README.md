@@ -125,6 +125,8 @@ pnpm build
 
 ## 发布
 
+依赖变更后运行 `pnpm licenses:generate` 更新已提交的许可证声明；正式构建直接使用这些声明，避免依赖包管理器的本机存储路径。
+
 项目采用 MIT 许可证，第三方依赖声明见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。插件命名来自作者家猫 Jelly。
 
 `manifest.json` 是插件元数据的唯一来源；构建会将它写入插件产物。更新版本时同步修改根 `package.json` 的版本和 `versions.json` 映射。

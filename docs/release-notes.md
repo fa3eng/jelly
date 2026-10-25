@@ -2,7 +2,7 @@
 
 Jelly is a desktop Obsidian AI assistant named after a cat.
 
-This patch addresses the initial community review: it adds an English README, uses the native settings heading, simplifies the Open command, respects custom vault configuration folders, and uses the host DOM creation helper.
+This patch addresses the initial community review: it adds an English README, uses the native settings heading, simplifies the Open command, respects custom vault configuration folders, uses the host DOM creation helper, and makes clean builds use committed license notices instead of local dependency-store paths.
 
 - Configure an API key, API endpoint and model from the settings tab.
 - Chat with streaming Markdown replies and restore local conversations.

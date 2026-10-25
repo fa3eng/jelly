@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vp -C apps/obsidian-plugin run dev",
-    "build": "pnpm licenses:generate && pnpm agent-service:build && vp -C apps/obsidian-plugin run build",
+    "build": "pnpm agent-service:build && vp -C apps/obsidian-plugin run build",
     "agent-service:dev": "node --import tsx --watch apps/agent-service/src/index.ts",
     "agent-service:build": "pnpm --filter @jelly/agent-service build",
     "test": "vitest run",
