@@ -22,7 +22,7 @@ describe('Project document tools', () => {
       await writeFile(join(docs, 'nested/note.md'), 'updated');
       expect(await invoke('nested/note.md')).toEqual({
         ok: true,
-        data: { path: 'nested/note.md', content: 'updated' },
+        data: { path: 'nested/note.md', content: 'updated', revision: expect.any(String) },
       });
       await writeFile(join(root, 'outside.md'), 'outside');
       await symlink(join(root, 'outside.md'), join(docs, 'link.md'));

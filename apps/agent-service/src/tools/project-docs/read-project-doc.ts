@@ -1,32 +1,21 @@
-import { readFile, realpath } from 'node:fs/promises';
-import { isAbsolute, relative, resolve, sep } from 'node:path';
 import { z } from 'zod';
-
 import { defineTool } from '@aula/agent-runtime';
+import { createDocumentFiles, type DocumentFiles } from './document-files';
 
-export function createReadProjectDoc(docsDirectory: string) {
+/**
+ * 创建资料读取工具，向模型返回当前全文和供修改、删除使用的 revision。
+ * @param docsDirectory - 配置的资料根目录。
+ * @param files - 由工具工厂注入的共享文件能力，独立使用时自动创建。
+ */
+export function createReadProjectDoc(
+  docsDirectory: string,
+  files: DocumentFiles = createDocumentFiles(docsDirectory),
+) {
   return defineTool({
     name: 'read_project_doc',
     description:
-      '读取项目 docs 内指定 Markdown 文件的当前全文。path 是相对 docs 的路径，不知道路径时可先调用 list_project_docs。',
+      '读取配置资料目录内 Markdown 文件的当前全文及 revision。path 是相对路径，不知道路径时先调用 list_project_docs；修改或删除前先读取并原样使用返回的 revision。',
     inputSchema: z.strictObject({ path: z.string().min(1) }),
-
-    run: async ({ path }, signal) => {
-      // 文件列表是动态的；docsDirectory 定义这个工具的读取范围。
-      if (isAbsolute(path)) throw new Error('请使用相对 docs 的路径');
-
-      const root = await realpath(docsDirectory);
-      const target = await realpath(resolve(root, path));
-      const child = relative(root, target);
-
-      if (child === '..' || child.startsWith(`..${sep}`) || isAbsolute(child)) {
-        throw new Error('文件必须位于 docs 目录内');
-      }
-
-      if (!target.toLowerCase().endsWith('.md')) throw new Error('请选择 Markdown 文件');
-
-      const content = await readFile(target, { encoding: 'utf8', signal });
-      return { path, content };
-    },
+    run: ({ path }, signal) => files.read(path, signal),
   });
 }
