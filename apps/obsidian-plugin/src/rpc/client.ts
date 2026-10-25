@@ -1,6 +1,6 @@
 import { createORPCClient } from '@orpc/client';
 import { RPCLink } from '@orpc/client/fetch';
-import type { AgentClient } from '@aula/contracts';
+import type { AgentClient } from '@jelly/contracts';
 
 export interface ServiceConnection {
   baseUrl: string;

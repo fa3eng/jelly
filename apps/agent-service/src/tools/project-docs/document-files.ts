@@ -109,7 +109,7 @@ export function createDocumentFiles(directory: string) {
         }
         const updated =
           content.slice(0, index) + input.newText + content.slice(index + input.oldText.length);
-        const temporary = resolve(dirname(target), `.aula-${randomUUID()}.tmp`);
+        const temporary = resolve(dirname(target), `.jelly-${randomUUID()}.tmp`);
         const info = await lstat(target);
         try {
           await writeFile(temporary, updated, {

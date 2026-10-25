@@ -1,12 +1,13 @@
 {
-  "name": "@aula/ui",
+  "name": "@jelly/ui",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "exports": {
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@aula/domain": "workspace:*",
+    "@jelly/domain": "workspace:*",
     "radix-ui": "1.6.7",
     "react": "19.3.0"
   },

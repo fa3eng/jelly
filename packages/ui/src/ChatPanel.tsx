@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
-import type { AssistantRunStatus, ChatMessage } from '@aula/domain';
+import type { AssistantRunStatus, ChatMessage } from '@jelly/domain';
 import { Dialog } from './Dialog';
 import { ChatIcon } from './ChatIcon';
 import { shouldSubmitOnEnter } from './composer-keys';
@@ -95,7 +95,7 @@ export function ChatPanel({
           ) : (
             messages.map((message) => (
               <article className={`osc-message osc-message-${message.role}`} key={message.id}>
-                <div className="osc-message-label">{message.role === 'user' ? '你' : 'Aula'}</div>
+                <div className="osc-message-label">{message.role === 'user' ? '你' : 'Jelly'}</div>
                 <div className="osc-message-content">
                   {message.role === 'assistant' && !message.content ? (
                     <span className="osc-thinking">正在思考…</span>

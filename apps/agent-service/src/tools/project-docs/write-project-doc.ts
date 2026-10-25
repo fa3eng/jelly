@@ -1,4 +1,4 @@
-import { defineTool } from '@aula/agent-runtime';
+import { defineTool } from '@jelly/agent-runtime';
 import { z } from 'zod';
 import type { DocumentFiles } from './document-files';
 

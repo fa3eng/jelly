@@ -15,6 +15,8 @@ export default defineConfig({
       external: [/^node:/],
       output: {
         codeSplitting: false,
+        banner:
+          "import { createRequire as __jellyCreateRequire } from 'node:module'; const require = __jellyCreateRequire(import.meta.url);",
       },
     },
   },

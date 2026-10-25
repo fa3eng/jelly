@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { ChatPanel } from '@aula/ui';
+import { ChatPanel } from '@jelly/ui';
 
 describe('Chat presentation', () => {
   it('keeps conversation updates accessible and defers streaming announcements', () => {

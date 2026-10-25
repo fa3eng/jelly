@@ -10,10 +10,12 @@ dist/
 .env.*
 !.env.example
 
+**/.jelly/
 **/.aula/
 
 # Public documentation is opt-in. Local tutorials, plans and drafts stay on disk.
 /docs/*
+!/docs/release-notes.md
 !/docs/architecture/
 /docs/architecture/*
 !/docs/architecture/current-runtime.md

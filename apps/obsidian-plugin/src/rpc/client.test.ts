@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { createORPCClient } from '@orpc/client';
 import { RPCLink } from '@orpc/client/fetch';
-import type { AgentClient, ChatStreamEvent } from '@aula/contracts';
+import type { AgentClient, ChatStreamEvent } from '@jelly/contracts';
 import type { AgentStreamItem } from '../../../../packages/agent-runtime/src/agent/loop';
 import { createApp } from '../../../agent-service/src/app/app';
 import { createJsonlStore } from '../../../agent-service/src/session/jsonl-store';
@@ -22,7 +22,7 @@ describe('Session RPC over HTTP', () => {
   let directory: string;
   let sessions: ReturnType<typeof createSessionManager>;
   beforeEach(async () => {
-    directory = await mkdtemp(join(tmpdir(), 'aula-rpc-'));
+    directory = await mkdtemp(join(tmpdir(), 'jelly-rpc-'));
     sessions = createSessionManager(await createJsonlStore(directory));
     await sessions.initialize();
   });

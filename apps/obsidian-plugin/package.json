@@ -1,15 +1,16 @@
 {
-  "name": "@aula/obsidian-plugin",
+  "name": "@jelly/obsidian-plugin",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "scripts": {
-    "dev": "NODE_ENV=development vp build --watch --mode development --outDir ../../example/demo-vault/.obsidian/plugins/aula",
+    "dev": "NODE_ENV=development vp build --watch --mode development --outDir ../../example/demo-vault/.obsidian/plugins/jelly",
     "build": "vp build"
   },
   "dependencies": {
-    "@aula/contracts": "workspace:*",
-    "@aula/domain": "workspace:*",
-    "@aula/ui": "workspace:*",
+    "@jelly/contracts": "workspace:*",
+    "@jelly/domain": "workspace:*",
+    "@jelly/ui": "workspace:*",
     "@orpc/client": "1.15.7",
     "react": "19.3.0",
     "react-dom": "19.3.0"

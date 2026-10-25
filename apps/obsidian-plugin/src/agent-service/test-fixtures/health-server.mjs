@@ -1,8 +1,8 @@
 import { createServer } from 'node:http';
 
-const token = process.env.AULA_SERVER_TOKEN;
-const allowedOrigin = process.env.AULA_ALLOWED_ORIGIN;
-const port = Number(process.env.AULA_SERVER_PORT);
+const token = process.env.JELLY_SERVER_TOKEN;
+const allowedOrigin = process.env.JELLY_ALLOWED_ORIGIN;
+const port = Number(process.env.JELLY_SERVER_PORT);
 
 createServer((request, response) => {
   if (request.url === '/health') {

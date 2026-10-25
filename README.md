@@ -1,16 +1,17 @@
-# Aula
+# Jelly
 
-Aula 是一个桌面端 Obsidian AI 助手，支持围绕本地 Markdown 资料进行对话。
+Jelly 是一个桌面端 Obsidian AI 助手，支持围绕本地 Markdown 资料进行对话。
 
 ## 功能
 
 - 在 Obsidian 侧栏中进行多轮对话，流式显示 Markdown 回答。
-- 由 Agent 按需列出、读取指定目录中的 Markdown 文件。
+- 由 Agent 按需列出资料，读取当前 Vault 中的 Markdown 与文本型 PDF。
+- 按用户要求新建、编辑或删除 Markdown 文件。
 - 新建、切换和恢复会话；对话与工具记录保存在本地 JSONL 文件中。
 - 停止生成，并记录运行完成、取消、中断或失败状态。
 - 通过 OpenAI-compatible Chat Completions 接口调用支持流式输出和工具调用的模型。
 
-当前仅支持桌面端，需要单独安装 Node.js。当前版本通过环境变量配置模型与数据目录，尚未提供插件设置页，也未完成社区插件安装方式的适配。
+当前仅支持桌面端。发行版使用 Obsidian 自带的 Node 运行环境启动独立 Agent Service，无需用户另装 Node.js。安装后在 **设置 → Jelly** 填写 API Key、API 地址和模型名称，保存后自动启动。以后启用插件会自动读取配置并启动服务。
 
 ## 开发与运行
 
@@ -26,8 +27,8 @@ pnpm install
 OPENAI_API_KEY=your-api-key
 OPENAI_BASE_URL=https://your-provider.example/v1
 OPENAI_MODEL=your-model-id
-AULA_DOCS_DIRECTORY=/absolute/path/to/markdown-directory
-AULA_SESSION_DIRECTORY=/absolute/path/to/session-directory
+JELLY_DOCS_DIRECTORY=/absolute/path/to/markdown-directory
+JELLY_SESSION_DIRECTORY=/absolute/path/to/session-directory
 ```
 
 `OPENAI_BASE_URL` 可省略，此时使用 SDK 的默认服务地址。模型必须支持当前工具调用及流式协议；兼容性取决于具体服务与模型。`.env`、本地会话和 Obsidian 配置不纳入 Git。
@@ -36,7 +37,7 @@ AULA_SESSION_DIRECTORY=/absolute/path/to/session-directory
 pnpm run dev
 ```
 
-开发构建会持续写入 `example/demo-vault/.obsidian/plugins/aula/`。在 Obsidian 中将 `example/demo-vault/` 作为 Vault 打开，到 **Settings → Community plugins** 启用 Aula，然后运行命令 **Open Aula**。
+开发构建会持续写入 `example/demo-vault/.obsidian/plugins/jelly/`。在 Obsidian 中将 `example/demo-vault/` 作为 Vault 打开，到 **Settings → Community plugins** 启用 Jelly，然后运行命令 **Open Jelly**。
 
 源码重新构建后，在 Obsidian 命令面板运行 **Reload app without saving** 加载更新；修改 manifest 后重启 Obsidian。
 
@@ -46,20 +47,29 @@ pnpm run dev
 pnpm build
 ```
 
-产物位于 `apps/obsidian-plugin/dist/`。手动安装时，将整个目录中的文件复制到目标 Vault 的 `.obsidian/plugins/aula/`，包括 `main.js`、`manifest.json`、`styles.css` 和 `agent-service.mjs`。
+产物位于 `apps/obsidian-plugin/dist/`，只需交付 `main.js`、`manifest.json` 和 `styles.css`。手动安装时，将这三个文件复制到目标 Vault 的 `.obsidian/plugins/jelly/`。服务代码已内嵌在 `main.js` 中，首次启动会在插件目录的 `.runtime/<内容哈希>/` 内准备服务入口，更新后使用对应版本的入口。
 
-在目标插件目录创建 `.env` 并配置模型、资料目录与会话目录，再启用插件。开发构建使用仓库根目录的 `.env`；生产构建使用插件目录的 `.env`。已有进程环境变量优先。生产启动通过 `node` 命令运行服务，Obsidian 进程需要能够找到它。
+启用插件后，打开 **设置 → Jelly**：
 
-当前资料范围由 `AULA_DOCS_DIRECTORY` 指定，不会自动切换为当前 Vault。若只希望读取当前 Vault，请将该配置指向对应 Vault 或其中的资料子目录。会话目录由 `AULA_SESSION_DIRECTORY` 指定；不同 Vault 应使用不同目录。
+1. 填入自己的 API Key。密钥保存在 Obsidian 的 SecretStorage 中，不写入插件 `data.json`。
+2. 填写 API 地址和模型名称，默认使用 `https://api.deepseek.com` 与 `deepseek-flash`。这些普通配置保存在插件 `data.json`。
+3. 点击 **保存并启动**，看到服务就绪后点击 **打开 Jelly** 开始对话。首次安装尚未填写 Key 时，插件会显示配置引导；以后重新启用时自动启动。
+
+模型名称以服务商提供的模型 ID 为准。保存配置只启动本地服务，真实模型连通性需发送一条消息验证。
+
+生产版本将当前打开的 Vault 作为文件工具范围，会话固定保存在该 Vault 的 `.jelly/sessions/`，无需配置目录。生产版本不读取旧插件 `.env`；开发模式在尚未配置 Key 时仍支持仓库根目录 `.env`，配置 Key 后采用设置页及 Vault 默认目录。
+
+生产启动通过宿主 Electron 的 `utilityProcess` 创建独立进程，界面与服务仍使用 HTTP/oRPC 通信；不会下载或安装额外依赖。需要 Obsidian 1.11.4 或更新版本，以及提供 Node 20.19 或更高版本的桌面安装程序。开发模式仍使用本机 Node 和 tsx。
 
 ## 数据与网络
 
 - 模型请求发送到配置的模型服务。发送内容包括系统提示词、对话历史，以及 Agent 读取并用于回答的 Markdown 内容；使用前请确认相应服务的数据处理政策及费用。
 - Agent Service 在本机独立 Node 子进程中运行，只监听 `127.0.0.1`；插件与服务通过启动时生成的令牌通信。
-- Markdown 工具只读取配置目录内的 `.md` 文件；读取时检查解析后的实际路径，拒绝越界路径。
-- 配置的资料与会话目录可以位于 Vault 外：前者用于读取资料，后者用于保存和恢复对话。范围由配置决定。
+- 文件工具将增删改查限制在当前 Vault；检查实际路径和文件类型，拒绝越界和文件软链接。PDF 在本地解析，仅提取的内容随工具结果进入模型请求。
+- 删除文件是永久删除，当前没有逐次确认面板、回收站或撤销；使用写入和删除能力前请备份资料。
+- 生产版本的文件工具范围限定为当前 Vault；开发模式使用 `.env` 时可显式指定 Vault 外目录，分别用于文件工具与会话存储。
 - 会话以本地 JSONL 文件保存，包含消息和工具结果，可能包含资料正文。请将它们视为个人数据，不要提交到公开仓库。
-- 当前版本不提供笔记写回、PDF 解析、语义检索或自动上下文压缩。
+- 当前版本不提供扫描件 OCR、语义检索或自动上下文压缩。
 
 ## 架构与贡献
 
@@ -75,4 +85,21 @@ pnpm test
 pnpm build
 ```
 
-自动化检查不需要真实模型凭据。插件加载、实际模型兼容性和跨平台运行仍需在 Obsidian 中验证。
+自动化检查不需要真实模型凭据。宿主启动方式已在 macOS、Electron 43.3.0 上验证；Windows、Linux、其他安装程序版本及社区审核仍需验证。实际模型兼容性取决于服务商与模型。
+
+## 发布
+
+项目采用 MIT 许可证，第三方依赖声明见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。插件命名来自作者家猫 Jelly。
+
+`manifest.json` 是插件元数据的唯一来源；构建会将它写入插件产物。更新版本时同步修改根 `package.json` 的版本和 `versions.json` 映射。
+
+```sh
+pnpm check
+pnpm test
+pnpm build
+pnpm release:prepare
+```
+
+`dist/release/` 中提供标准安装文件、手动安装 ZIP、校验和及发布说明。ZIP 内的 `jelly` 文件夹可直接放入 Vault 的 `.obsidian/plugins/`。
+
+推送与 manifest 完全一致的版本 tag（例如 `0.1.0`，不带 `v`）后，GitHub Actions 会验证、构建并创建 **草稿 Release**。审核草稿内容后手动发布，再通过 Obsidian Community 提交插件。此流程不会自动向社区目录提交。

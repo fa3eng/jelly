@@ -4,8 +4,8 @@ import { loadAgentConfig } from './agent-config';
 const environment = {
   OPENAI_API_KEY: 'test-key',
   OPENAI_MODEL: 'test-model',
-  AULA_DOCS_DIRECTORY: '/tmp/docs',
-  AULA_SESSION_DIRECTORY: '/tmp/sessions',
+  JELLY_DOCS_DIRECTORY: '/tmp/docs',
+  JELLY_SESSION_DIRECTORY: '/tmp/sessions',
 };
 
 describe('Agent proxy configuration', () => {

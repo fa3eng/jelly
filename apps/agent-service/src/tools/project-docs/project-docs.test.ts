@@ -1,13 +1,13 @@
 import { mkdtemp, mkdir, writeFile, rm, symlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createToolRegistry } from '@aula/agent-runtime';
+import { createToolRegistry } from '@jelly/agent-runtime';
 import { describe, expect, it } from 'vitest';
 import { createProjectDocTools } from './project-docs';
 
 describe('Project document tools', () => {
   it('observes filesystem changes and rejects paths or symlinks outside the configured directory', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'aula-doc-tools-'));
+    const root = await mkdtemp(join(tmpdir(), 'jelly-doc-tools-'));
     const docs = join(root, 'docs');
     await mkdir(join(docs, 'nested'), { recursive: true });
     try {

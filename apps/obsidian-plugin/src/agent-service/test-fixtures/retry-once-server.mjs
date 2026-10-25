@@ -1,17 +1,17 @@
 import { existsSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 
-const marker = process.env.AULA_TEST_MARKER;
-if (!marker) throw new Error('AULA_TEST_MARKER is required');
+const marker = process.env.JELLY_TEST_MARKER;
+if (!marker) throw new Error('JELLY_TEST_MARKER is required');
 
 if (!existsSync(marker)) {
   writeFileSync(marker, 'started');
   process.exit(9);
 }
 
-const token = process.env.AULA_SERVER_TOKEN;
-const allowedOrigin = process.env.AULA_ALLOWED_ORIGIN;
-const port = Number(process.env.AULA_SERVER_PORT);
+const token = process.env.JELLY_SERVER_TOKEN;
+const allowedOrigin = process.env.JELLY_ALLOWED_ORIGIN;
+const port = Number(process.env.JELLY_SERVER_PORT);
 
 createServer((request, response) => {
   if (request.url === '/health') {

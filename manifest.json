@@ -1,0 +1,10 @@
+{
+  "id": "jelly",
+  "name": "Jelly",
+  "version": "0.1.0",
+  "minAppVersion": "1.11.4",
+  "description": "Chat with your notes, read Markdown and PDFs, and organize your knowledge with an AI assistant.",
+  "author": "fa3eng",
+  "isDesktopOnly": true,
+  "authorUrl": "https://github.com/fa3eng"
+}

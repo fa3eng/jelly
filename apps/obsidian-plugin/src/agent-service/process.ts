@@ -1,14 +1,22 @@
-import { spawn, type ChildProcess } from 'node:child_process';
+import { spawn } from 'node:child_process';
+import { EventEmitter } from 'node:events';
 import { randomBytes } from 'node:crypto';
 import { createServer } from 'node:net';
 
-export interface StartAgentServiceOptions {
-  executable: string;
-  args: string[];
+export interface ServiceChild extends EventEmitter {
+  exitCode: number | null;
+  signalCode: NodeJS.Signals | null;
+  kill(signal?: NodeJS.Signals): boolean;
+}
+
+export type StartAgentServiceOptions = {
+  executable?: string;
+  args?: string[];
+  launch?: (environment: NodeJS.ProcessEnv) => ServiceChild;
   cwd?: string;
   allowedOrigin: string;
-  environment?: Record<string, string>;
-}
+  environment?: NodeJS.ProcessEnv;
+};
 
 export interface AgentServiceHandle {
   baseUrl: string;
@@ -33,21 +41,25 @@ async function reservePort(): Promise<number> {
   return address.port;
 }
 
-function waitForExit(child: ChildProcess, timeoutMs: number): Promise<void> {
+function waitForExit(child: ServiceChild, timeoutMs: number): Promise<void> {
   if (child.exitCode !== null || child.signalCode !== null) return Promise.resolve();
-  return new Promise((resolve) => {
-    const timer = setTimeout(() => {
-      child.kill('SIGKILL');
-      resolve();
-    }, timeoutMs);
-    child.once('exit', () => {
+  return new Promise((resolve, reject) => {
+    const exited = () => {
       clearTimeout(timer);
       resolve();
-    });
+    };
+    let timer = setTimeout(() => {
+      child.kill('SIGKILL');
+      timer = setTimeout(() => {
+        child.removeListener('exit', exited);
+        reject(new Error('Agent Service did not exit after forced shutdown'));
+      }, 1_000);
+    }, timeoutMs);
+    child.once('exit', exited);
   });
 }
 
-async function stopChild(child: ChildProcess): Promise<void> {
+async function stopChild(child: ServiceChild): Promise<void> {
   if (child.exitCode !== null || child.signalCode !== null) return;
   child.kill('SIGTERM');
   await waitForExit(child, 2_000);
@@ -61,18 +73,25 @@ export async function startAgentService(
   for (let attempt = 0; attempt < START_ATTEMPTS; attempt += 1) {
     const port = await reservePort();
     const token = randomBytes(32).toString('hex');
-    const child = spawn(options.executable, options.args, {
-      cwd: options.cwd,
-      env: {
+    const environment = Object.fromEntries(
+      Object.entries({
         ...process.env,
         ...options.environment,
-        AULA_SERVER_HOST: '127.0.0.1',
-        AULA_SERVER_PORT: String(port),
-        AULA_SERVER_TOKEN: token,
-        AULA_ALLOWED_ORIGIN: options.allowedOrigin,
-      },
-      stdio: 'ignore',
-    });
+        JELLY_SERVER_HOST: '127.0.0.1',
+        JELLY_SERVER_PORT: String(port),
+        JELLY_SERVER_TOKEN: token,
+        JELLY_ALLOWED_ORIGIN: options.allowedOrigin,
+      }).filter((entry): entry is [string, string] => entry[1] !== undefined),
+    );
+    if (!options.launch && !options.executable)
+      throw new Error('Agent Service launcher is required');
+    const child = options.launch
+      ? options.launch(environment)
+      : spawn(options.executable!, options.args ?? [], {
+          cwd: options.cwd,
+          env: environment,
+          stdio: 'ignore',
+        });
     const baseUrl = `http://127.0.0.1:${port}`;
     let spawnError: Error | undefined;
     child.once('error', (error) => {

@@ -4,7 +4,7 @@
 
 ## 背景
 
-Aula 包含 Obsidian 插件、本地 Agent Service、React UI、Agent Runtime 和共享契约。模块需要独立维护边界，并在同一仓库中协同构建和验证。
+Jelly 包含 Obsidian 插件、本地 Agent Service、React UI、Agent Runtime 和共享契约。模块需要独立维护边界，并在同一仓库中协同构建和验证。
 
 ## 决策
 
@@ -17,8 +17,8 @@ Aula 包含 Obsidian 插件、本地 Agent Service、React UI、Agent Runtime �
 
 ## 影响
 
-共享契约和依赖由 workspace 统一管理。插件构建前先构建 Service，再将服务产物复制到插件输出目录。开发构建写入专用测试 Vault，生产构建写入 `dist`。
+共享契约和依赖由 workspace 统一管理。插件构建前先构建 Service，再将服务产物作为文本内嵌到插件 `main.js`。开发构建写入专用测试 Vault，生产构建写入 `dist`。
 
-独立服务需要处理子进程生命周期、Node 定位和额外文件分发。目前提供手动复制完整构建目录的安装方式；标准社区安装包仍需适配。
+生产启动器使用 Obsidian 宿主的 Electron `utilityProcess`，保留独立服务进程和 HTTP/oRPC。服务入口由随插件交付的代码准备到插件目录下的版本化 `.runtime` 缓存；标准分发仅需 `main.js`、`manifest.json` 和 `styles.css`，不要求用户安装 Node。开发模式继续使用本机 Node 与 tsx，独立 Agent Service 构建仍可供其他宿主使用。
 
 实际依赖版本以各 package.json 和 pnpm-lock.yaml 为准。当前模块关系见 [架构说明](../current-runtime.md)。

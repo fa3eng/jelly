@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import type { AgentMessage, AgentRunOptions, AgentStreamItem } from '@aula/agent-runtime';
-import type { AgentOutputEvent } from '@aula/domain';
+import type { AgentMessage, AgentRunOptions, AgentStreamItem } from '@jelly/agent-runtime';
+import type { AgentOutputEvent } from '@jelly/domain';
 import type { JsonlStore } from './jsonl-store';
 import {
   messageSchema,

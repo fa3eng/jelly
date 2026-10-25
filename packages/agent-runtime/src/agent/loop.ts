@@ -1,5 +1,5 @@
 import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
-import type { AgentOutputEvent } from '@aula/domain';
+import type { AgentOutputEvent } from '@jelly/domain';
 import type { ContextBuilder } from '../context/context';
 import type { ToolRegistry } from '../tools/registry';
 import type { ModelTurn, ModelTurnFunction } from './model-turn';

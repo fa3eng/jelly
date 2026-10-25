@@ -11,9 +11,9 @@ const schema = z
     reasoningEffort: z
       .enum(['none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'])
       .optional(),
-    docsDirectory: z.string().refine(isAbsolute, 'AULA_DOCS_DIRECTORY 必须是绝对路径'),
+    docsDirectory: z.string().refine(isAbsolute, 'JELLY_DOCS_DIRECTORY 必须是绝对路径'),
     systemPrompt: z.string().min(1).optional(),
-    sessionDirectory: z.string().refine(isAbsolute, 'AULA_SESSION_DIRECTORY 必须是绝对路径'),
+    sessionDirectory: z.string().refine(isAbsolute, 'JELLY_SESSION_DIRECTORY 必须是绝对路径'),
   })
   .refine((config) => !config.proxyCaPath || !!config.proxyUrl, {
     path: ['proxyUrl'],
@@ -28,8 +28,8 @@ export function loadAgentConfig(env: Record<string, string | undefined>) {
     proxyUrl: env.OPENAI_PROXY_URL,
     proxyCaPath: env.OPENAI_PROXY_CA_PATH,
     reasoningEffort: env.OPENAI_REASONING_EFFORT,
-    docsDirectory: env.AULA_DOCS_DIRECTORY,
-    systemPrompt: env.AULA_SYSTEM_PROMPT,
-    sessionDirectory: env.AULA_SESSION_DIRECTORY,
+    docsDirectory: env.JELLY_DOCS_DIRECTORY,
+    systemPrompt: env.JELLY_SYSTEM_PROMPT,
+    sessionDirectory: env.JELLY_SESSION_DIRECTORY,
   });
 }

@@ -1,7 +1,7 @@
 import { mkdtemp, mkdir, readFile, writeFile, rm, symlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createToolRegistry } from '@aula/agent-runtime';
+import { createToolRegistry } from '@jelly/agent-runtime';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createProjectDocTools } from './project-docs';
 import { createDocumentFiles } from './document-files';
@@ -18,7 +18,7 @@ describe('Markdown CRUD through the tool registry', () => {
   };
 
   beforeEach(async () => {
-    root = await mkdtemp(join(tmpdir(), 'aula-crud-'));
+    root = await mkdtemp(join(tmpdir(), 'jelly-crud-'));
     docs = join(root, 'docs');
     await mkdir(join(docs, 'nested'), { recursive: true });
     tools = createToolRegistry(await createProjectDocTools(docs));

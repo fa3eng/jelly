@@ -3,7 +3,7 @@ import { Component, MarkdownRenderer, type App } from 'obsidian';
 
 /**
  * 使用 Obsidian 原生 Markdown 渲染助手回复，保留宿主的代码高亮和内链样式。
- * @param app - 当前 Vault 的 App，由 AulaView 传入。
+ * @param app - 当前 Vault 的 App，由 JellyView 传入。
  * @param content - 完整回复或正在流式增长的 Markdown 文字。
  * @param sourcePath - 相对链接的解析基准，默认从 Vault 根目录解析。
  */

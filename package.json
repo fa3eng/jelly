@@ -1,16 +1,19 @@
 {
-  "name": "aula",
+  "name": "jelly",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "vp -C apps/obsidian-plugin run dev",
-    "build": "pnpm agent-service:build && vp -C apps/obsidian-plugin run build",
+    "build": "pnpm licenses:generate && pnpm agent-service:build && vp -C apps/obsidian-plugin run build",
     "agent-service:dev": "node --import tsx --watch apps/agent-service/src/index.ts",
-    "agent-service:build": "pnpm --filter @aula/agent-service build",
+    "agent-service:build": "pnpm --filter @jelly/agent-service build",
     "test": "vitest run",
     "check": "vp check",
-    "format": "vp fmt"
+    "format": "vp fmt",
+    "licenses:generate": "node scripts/generate-notices.mjs",
+    "release:prepare": "node scripts/prepare-release.mjs"
   },
   "devDependencies": {
     "tsx": "4.23.15",

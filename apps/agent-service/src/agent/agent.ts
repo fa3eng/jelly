@@ -3,7 +3,7 @@ import {
   createOpenAIModelTurn,
   createContextBuilder,
   createToolRegistry,
-} from '@aula/agent-runtime';
+} from '@jelly/agent-runtime';
 import type { GenerateStream } from '../rpc/rpc';
 import type { loadAgentConfig } from '../config/agent-config';
 import { createSystemPrompt } from '../prompt/system-prompt';

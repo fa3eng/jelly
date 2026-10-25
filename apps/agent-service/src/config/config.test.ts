@@ -10,9 +10,9 @@ describe('Agent Service configuration', () => {
 
     expect(
       configModule.loadServiceConfig({
-        AULA_SERVER_PORT: '43127',
-        AULA_SERVER_TOKEN: 'test-token',
-        AULA_ALLOWED_ORIGIN: 'app://obsidian.md',
+        JELLY_SERVER_PORT: '43127',
+        JELLY_SERVER_TOKEN: 'test-token',
+        JELLY_ALLOWED_ORIGIN: 'app://obsidian.md',
       }),
     ).toEqual({
       host: '127.0.0.1',
@@ -22,19 +22,19 @@ describe('Agent Service configuration', () => {
     });
     expect(() =>
       configModule.loadServiceConfig({
-        AULA_SERVER_PORT: '43127',
-        AULA_SERVER_TOKEN: 'test-token',
-        AULA_ALLOWED_ORIGIN: 'app://obsidian.md',
-        AULA_SERVER_HOST: '0.0.0.0',
+        JELLY_SERVER_PORT: '43127',
+        JELLY_SERVER_TOKEN: 'test-token',
+        JELLY_ALLOWED_ORIGIN: 'app://obsidian.md',
+        JELLY_SERVER_HOST: '0.0.0.0',
       }),
     ).toThrow('Agent Service must bind to 127.0.0.1');
 
     expect(() =>
       configModule.loadServiceConfig({
-        AULA_SERVER_PORT: '70000',
-        AULA_SERVER_TOKEN: 'test-token',
-        AULA_ALLOWED_ORIGIN: 'app://obsidian.md',
+        JELLY_SERVER_PORT: '70000',
+        JELLY_SERVER_TOKEN: 'test-token',
+        JELLY_ALLOWED_ORIGIN: 'app://obsidian.md',
       }),
-    ).toThrow('AULA_SERVER_PORT must be a valid TCP port');
+    ).toThrow('JELLY_SERVER_PORT must be a valid TCP port');
   });
 });

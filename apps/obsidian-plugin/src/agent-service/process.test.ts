@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { spawn } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
@@ -17,7 +18,7 @@ describe('Agent Service process manager', () => {
     const serviceEntry = fileURLToPath(
       new URL('../../../agent-service/src/index.ts', import.meta.url),
     );
-    const directory = await mkdtemp(join(tmpdir(), 'aula-service-start-'));
+    const directory = await mkdtemp(join(tmpdir(), 'jelly-service-start-'));
     const service = await processModule.startAgentService({
       executable: process.execPath,
       args: ['--import', tsxLoader, ...(watch ? ['--watch'] : []), serviceEntry],
@@ -26,8 +27,8 @@ describe('Agent Service process manager', () => {
       environment: {
         OPENAI_API_KEY: 'test-key',
         OPENAI_MODEL: 'test-model',
-        AULA_DOCS_DIRECTORY: directory,
-        AULA_SESSION_DIRECTORY: join(directory, '.aula/sessions'),
+        JELLY_DOCS_DIRECTORY: directory,
+        JELLY_SESSION_DIRECTORY: join(directory, '.jelly/sessions'),
       },
     });
 
@@ -47,18 +48,39 @@ describe('Agent Service process manager', () => {
     await expect(fetch(`${service.baseUrl}/health`)).rejects.toThrow();
   });
 
+  it('uses a host launcher with the same authenticated HTTP lifecycle', async () => {
+    const { startAgentService } = await import('./process');
+    const fixture = fileURLToPath(new URL('./test-fixtures/health-server.mjs', import.meta.url));
+    const service = await startAgentService({
+      launch: (env) => spawn(process.execPath, [fixture], { env, stdio: 'ignore' }),
+      allowedOrigin: 'app://obsidian.md',
+    });
+    try {
+      const response = await fetch(`${service.baseUrl}/health/ready`, {
+        headers: {
+          Authorization: `Bearer ${service.authorizationToken}`,
+          Origin: 'app://obsidian.md',
+        },
+      });
+      expect(response.status).toBe(200);
+    } finally {
+      await service.stop();
+    }
+    await expect(fetch(`${service.baseUrl}/health`)).rejects.toThrow();
+  });
+
   it('loads the optional working-directory env file through the real Node entry', async () => {
     const processModule = await processModulePromise;
     expect(processModule).not.toBeNull();
     if (!processModule) return;
 
-    const directory = await mkdtemp(join(tmpdir(), 'aula-service-env-'));
+    const directory = await mkdtemp(join(tmpdir(), 'jelly-service-env-'));
     const serviceEntry = fileURLToPath(
       new URL('../../../agent-service/src/index.ts', import.meta.url),
     );
     await writeFile(
       join(directory, '.env'),
-      `AULA_CWD_TEST=loaded-from-env\nAULA_SERVER_TOKEN=ignored-file-token\nAULA_SERVER_PORT=1\nOPENAI_API_KEY=test-key\nOPENAI_MODEL=test-model\nAULA_DOCS_DIRECTORY=${directory}\nAULA_SESSION_DIRECTORY=${join(directory, '.aula/sessions')}\n`,
+      `JELLY_CWD_TEST=loaded-from-env\nJELLY_SERVER_TOKEN=ignored-file-token\nJELLY_SERVER_PORT=1\nOPENAI_API_KEY=test-key\nOPENAI_MODEL=test-model\nJELLY_DOCS_DIRECTORY=${directory}\nJELLY_SESSION_DIRECTORY=${join(directory, '.jelly/sessions')}\n`,
     );
     try {
       const service = await processModule.startAgentService({
@@ -68,7 +90,7 @@ describe('Agent Service process manager', () => {
           tsxLoader,
           '--input-type=module',
           '--eval',
-          `await import(${JSON.stringify(pathToFileURL(serviceEntry).href)}); if (process.env.AULA_CWD_TEST !== "loaded-from-env") process.exit(9);`,
+          `await import(${JSON.stringify(pathToFileURL(serviceEntry).href)}); if (process.env.JELLY_CWD_TEST !== "loaded-from-env") process.exit(9);`,
         ],
         cwd: directory,
         allowedOrigin: 'app://obsidian.md',
@@ -136,7 +158,7 @@ describe('Agent Service process manager', () => {
     expect(processModule).not.toBeNull();
     if (!processModule) return;
 
-    const markerDirectory = await mkdtemp(join(tmpdir(), 'aula-service-retry-'));
+    const markerDirectory = await mkdtemp(join(tmpdir(), 'jelly-service-retry-'));
     const markerPath = join(markerDirectory, 'first-start');
     const fixturePath = fileURLToPath(
       new URL('./test-fixtures/retry-once-server.mjs', import.meta.url),
@@ -147,7 +169,7 @@ describe('Agent Service process manager', () => {
         executable: process.execPath,
         args: [fixturePath],
         allowedOrigin: 'app://obsidian.md',
-        environment: { AULA_TEST_MARKER: markerPath },
+        environment: { JELLY_TEST_MARKER: markerPath },
       });
 
       expect(service.baseUrl).toMatch(/^http:\/\/127\.0\.0\.1:\d+$/);

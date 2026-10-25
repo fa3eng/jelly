@@ -1,6 +1,6 @@
 import { implement, ORPCError } from '@orpc/server';
-import { agentContract, type ChatGenerateInput } from '@aula/contracts';
-import type { AgentOutputEvent } from '@aula/domain';
+import { agentContract, type ChatGenerateInput } from '@jelly/contracts';
+import type { AgentOutputEvent } from '@jelly/domain';
 import type { SessionManager } from '../session/session';
 
 export type GenerateText = (

@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { fetch, ProxyAgent } from 'undici';
-import type { ModelOptions } from '@aula/agent-runtime';
+import type { ModelOptions } from '@jelly/agent-runtime';
 
 export async function createModelTransport(options: {
   proxyUrl?: string;

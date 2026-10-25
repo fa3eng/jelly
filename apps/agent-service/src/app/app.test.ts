@@ -11,7 +11,7 @@ describe('Agent Service health endpoints', () => {
   let directory: string;
   let sessions: ReturnType<typeof createSessionManager>;
   beforeEach(async () => {
-    directory = await mkdtemp(join(tmpdir(), 'aula-health-'));
+    directory = await mkdtemp(join(tmpdir(), 'jelly-health-'));
     sessions = createSessionManager(await createJsonlStore(directory));
   });
   afterEach(async () => rm(directory, { recursive: true, force: true }));

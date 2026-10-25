@@ -1,6 +1,6 @@
 import { createRoot } from 'react-dom/client';
 import type { App } from 'obsidian';
-import { ChatPanel, SessionToolbar } from '@aula/ui';
+import { ChatPanel, SessionToolbar } from '@jelly/ui';
 import type { ServiceConnection } from '../rpc/client';
 import { useChat } from './use-chat';
 import { MarkdownMessage } from './markdown-message';

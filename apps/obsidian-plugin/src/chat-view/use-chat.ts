@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import type { AssistantRunStatus, ChatMessage } from '@aula/domain';
-import type { SessionSummary, SessionView } from '@aula/contracts';
+import type { AssistantRunStatus, ChatMessage } from '@jelly/domain';
+import type { SessionSummary, SessionView } from '@jelly/contracts';
 import { createRpcClient, type ServiceConnection } from '../rpc/client';
 
 type RpcClient = ReturnType<typeof createRpcClient>;

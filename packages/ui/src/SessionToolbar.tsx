@@ -41,7 +41,7 @@ export function SessionToolbar({
             <ChatIcon name="book" size={18} />
           </span>
           <div>
-            <strong>Aula</strong>
+            <strong>Jelly</strong>
             <span>你的学习对话</span>
           </div>
         </div>

@@ -3,7 +3,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import type { AgentMessage, AgentStreamItem } from '@aula/agent-runtime';
+import type { AgentMessage, AgentStreamItem } from '@jelly/agent-runtime';
 import { createJsonlStore } from './jsonl-store';
 import { createSessionManager } from './session';
 
@@ -18,7 +18,7 @@ describe('Session lifecycle', () => {
   let store: Awaited<ReturnType<typeof createJsonlStore>>;
   let sessions: ReturnType<typeof createSessionManager>;
   beforeEach(async () => {
-    directory = await mkdtemp(join(tmpdir(), 'aula-session-'));
+    directory = await mkdtemp(join(tmpdir(), 'jelly-session-'));
     store = await createJsonlStore(directory);
     sessions = createSessionManager(store);
   });

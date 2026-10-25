@@ -1,6 +1,7 @@
 {
-  "name": "@aula/contracts",
+  "name": "@jelly/contracts",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "exports": {
     ".": "./src/index.ts"

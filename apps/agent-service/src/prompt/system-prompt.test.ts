@@ -1,20 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import { createContextBuilder } from '@aula/agent-runtime';
+import { createContextBuilder } from '@jelly/agent-runtime';
 import { loadAgentConfig } from '../config/agent-config';
 import { createSystemPrompt } from './system-prompt';
 
 const environment = {
   OPENAI_API_KEY: 'test-key',
   OPENAI_MODEL: 'test-model',
-  AULA_DOCS_DIRECTORY: '/tmp/docs',
-  AULA_SESSION_DIRECTORY: '/tmp/sessions',
+  JELLY_DOCS_DIRECTORY: '/tmp/docs',
+  JELLY_SESSION_DIRECTORY: '/tmp/sessions',
 };
 
 describe('System prompt assembly', () => {
   it.each([undefined, 'Custom study instructions'])(
     'provides a prompt to Context with override=%s',
     (override) => {
-      const config = loadAgentConfig({ ...environment, AULA_SYSTEM_PROMPT: override });
+      const config = loadAgentConfig({ ...environment, JELLY_SYSTEM_PROMPT: override });
       const prompt = createSystemPrompt(config);
       const context = createContextBuilder({
         getSystemPrompt: prompt.getSystemPrompt,
@@ -31,6 +31,6 @@ describe('System prompt assembly', () => {
   );
 
   it('rejects an explicit empty override instead of silently falling back to the default', () => {
-    expect(() => loadAgentConfig({ ...environment, AULA_SYSTEM_PROMPT: '' })).toThrow();
+    expect(() => loadAgentConfig({ ...environment, JELLY_SYSTEM_PROMPT: '' })).toThrow();
   });
 });

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { defineTool } from '@aula/agent-runtime';
+import { defineTool } from '@jelly/agent-runtime';
 import { createDocumentFiles, type DocumentFiles } from './document-files';
 
 /**
