@@ -83,7 +83,7 @@ pnpm run dev
 pnpm build
 ```
 
-产物位于 `apps/obsidian-plugin/dist/`，只需交付 `main.js`、`manifest.json` 和 `styles.css`。手动安装时，将这三个文件复制到目标 Vault 的 `.obsidian/plugins/jelly/`。服务代码已内嵌在 `main.js` 中，首次启动会在插件目录的 `.runtime/<内容哈希>/` 内准备服务入口，更新后使用对应版本的入口。
+构建会在仓库根目录提供标准安装文件 `main.js`、`manifest.json` 和 `styles.css`，同时保留 `apps/obsidian-plugin/dist/` 中的相同产物。手动安装时，将这三个文件复制到目标 Vault 的 `.obsidian/plugins/jelly/`。服务代码已内嵌在 `main.js` 中，首次启动会在插件目录的 `.runtime/<内容哈希>/` 内准备服务入口，更新后使用对应版本的入口。
 
 启用插件后，打开 **设置 → Jelly**：
 

@@ -5,6 +5,9 @@ import { readFileSync } from 'node:fs';
 
 assert.ok(process.env.npm_execpath, 'Run this check through pnpm build:verify');
 const files = [
+  'main.js',
+  'styles.css',
+  'manifest.json',
   'apps/agent-service/dist/agent-service.mjs',
   ...['main.js', 'styles.css', 'manifest.json'].map((file) => `apps/obsidian-plugin/dist/${file}`),
 ];

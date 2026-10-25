@@ -23,6 +23,8 @@ const assets = ['main.js', 'manifest.json', 'styles.css'];
 const input = 'apps/obsidian-plugin/dist';
 assert.deepEqual((await readdir(input)).sort(), assets.slice().sort());
 assert.deepEqual(JSON.parse(await readFile(`${input}/manifest.json`, 'utf8')), manifest);
+for (const file of assets)
+  assert.deepEqual(await readFile(file), await readFile(`${input}/${file}`));
 const js = await readFile(`${input}/main.js`, 'utf8');
 assert.ok(js.includes('Third-party notices'));
 assert.ok(js.includes('Copyright (c) 2026 Jelly contributors'));
