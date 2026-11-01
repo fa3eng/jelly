@@ -1,0 +1,103 @@
+name: PR Agent
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review, synchronize]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: pr-agent-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  review:
+    # Initial rollout: review same-repository, human-authored, non-draft PRs.
+    if: >-
+      github.event.pull_request.draft == false &&
+      github.event.sender.type != 'Bot' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    steps:
+      - name: Check model configuration
+        env:
+          API_KEY: ${{ secrets.PR_AGENT_API_KEY }}
+          API_BASE: ${{ vars.PR_AGENT_API_BASE }}
+          MODEL: ${{ vars.PR_AGENT_MODEL }}
+          CONTEXT_TOKENS: ${{ vars.PR_AGENT_CONTEXT_TOKENS }}
+        run: |
+          set -euo pipefail
+          test -n "$API_KEY" || { echo 'Missing PR_AGENT_API_KEY secret'; exit 1; }
+          test -n "$API_BASE" || { echo 'Missing PR_AGENT_API_BASE variable'; exit 1; }
+          test -n "$MODEL" || { echo 'Missing PR_AGENT_MODEL variable'; exit 1; }
+          [[ "$CONTEXT_TOKENS" =~ ^[0-9]+$ ]] && (( CONTEXT_TOKENS > 393216 )) || {
+            echo 'PR_AGENT_CONTEXT_TOKENS must be an integer greater than the 393216-token output limit'; exit 1;
+          }
+
+      - name: Check out the trusted PR-Agent source (not the PR under review)
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: fa3eng/pr-agent
+          ref: c6a076d6f9fb59029341b0b4f5662ed522d11589
+          persist-credentials: false
+
+      - name: Build this fork's runtime
+        run: docker build -f docker/Dockerfile --target github_action -t jelly-pr-agent:local .
+
+      - name: Describe and review the PR
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          OPENAI_KEY: ${{ secrets.PR_AGENT_API_KEY }}
+          OPENAI__API_BASE: ${{ vars.PR_AGENT_API_BASE }}
+          CONFIG__MODEL: ${{ vars.PR_AGENT_MODEL }}
+          CONFIG__MODEL_WEAK: ${{ vars.PR_AGENT_MODEL }}
+          CONFIG__MODEL_REASONING: ${{ vars.PR_AGENT_MODEL }}
+          CONFIG__FALLBACK_MODELS: '[]'
+          CONFIG__CUSTOM_MODEL_MAX_TOKENS: ${{ vars.PR_AGENT_CONTEXT_TOKENS }}
+          CONFIG__MAX_MODEL_TOKENS: ${{ vars.PR_AGENT_CONTEXT_TOKENS }}
+          CONFIG__MAX_OUTPUT_TOKENS: '393216'
+          CONFIG__AI_TIMEOUT: '1800'
+          CONFIG__REASONING_EFFORT: high
+          CONFIG__RESPONSE_LANGUAGE: zh-CN
+          CONFIG__USE_GLOBAL_SETTINGS_FILE: 'false'
+          # Keep the initial integration PR comment-only before repo settings merge.
+          PR_DESCRIPTION__PUBLISH_DESCRIPTION_AS_COMMENT: 'true'
+          PR_DESCRIPTION__PUBLISH_DESCRIPTION_AS_COMMENT_PERSISTENT: 'true'
+          PR_DESCRIPTION__GENERATE_AI_TITLE: 'false'
+          PR_DESCRIPTION__PUBLISH_LABELS: 'false'
+          PR_REVIEWER__ENABLE_REVIEW_LABELS_SECURITY: 'false'
+          PR_REVIEWER__ENABLE_REVIEW_LABELS_EFFORT: 'false'
+          GITHUB_ACTION_CONFIG__AUTO_DESCRIBE: 'true'
+          GITHUB_ACTION_CONFIG__AUTO_REVIEW: 'true'
+          GITHUB_ACTION_CONFIG__AUTO_IMPROVE: 'false'
+          GITHUB_ACTION_CONFIG__HANDLE_PUSH_TRIGGER: 'true'
+          GITHUB_ACTION_CONFIG__PUSH_COMMANDS: '["/describe", "/review"]'
+          GITHUB_ACTION_CONFIG__FAIL_ON_TOOL_ERRORS: 'true'
+        run: |
+          set -euo pipefail
+          docker run --rm \
+            -v "$GITHUB_EVENT_PATH:/event.json:ro" \
+            -e GITHUB_EVENT_PATH=/event.json \
+            -e GITHUB_EVENT_NAME -e GITHUB_ACTIONS -e GITHUB_TOKEN \
+            -e OPENAI_KEY -e OPENAI__API_BASE \
+            -e CONFIG__MODEL -e CONFIG__MODEL_WEAK -e CONFIG__MODEL_REASONING \
+            -e CONFIG__FALLBACK_MODELS -e CONFIG__CUSTOM_MODEL_MAX_TOKENS \
+            -e CONFIG__MAX_MODEL_TOKENS -e CONFIG__AI_TIMEOUT \
+            -e CONFIG__MAX_OUTPUT_TOKENS -e CONFIG__REASONING_EFFORT -e CONFIG__RESPONSE_LANGUAGE \
+            -e CONFIG__USE_GLOBAL_SETTINGS_FILE \
+            -e PR_DESCRIPTION__PUBLISH_DESCRIPTION_AS_COMMENT \
+            -e PR_DESCRIPTION__PUBLISH_DESCRIPTION_AS_COMMENT_PERSISTENT \
+            -e PR_DESCRIPTION__GENERATE_AI_TITLE -e PR_DESCRIPTION__PUBLISH_LABELS \
+            -e PR_REVIEWER__ENABLE_REVIEW_LABELS_SECURITY \
+            -e PR_REVIEWER__ENABLE_REVIEW_LABELS_EFFORT \
+            -e GITHUB_ACTION_CONFIG__AUTO_DESCRIBE \
+            -e GITHUB_ACTION_CONFIG__AUTO_REVIEW \
+            -e GITHUB_ACTION_CONFIG__AUTO_IMPROVE \
+            -e GITHUB_ACTION_CONFIG__HANDLE_PUSH_TRIGGER \
+            -e GITHUB_ACTION_CONFIG__PUSH_COMMANDS \
+            -e GITHUB_ACTION_CONFIG__FAIL_ON_TOOL_ERRORS \
+            jelly-pr-agent:local

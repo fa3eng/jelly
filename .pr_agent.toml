@@ -1,0 +1,36 @@
+# Copy this file to the root of fa3eng/jelly. Never put credentials here.
+[config]
+response_language = "zh-CN"
+
+[pr_description]
+publish_description_as_comment = true
+publish_description_as_comment_persistent = true
+generate_ai_title = false
+publish_labels = false
+enable_semantic_files_types = true
+enable_pr_diagram = true
+extra_instructions = """
+面向人工 reviewer 解释这个 PR。概述解决的问题和修改前后的行为变化；
+按职责和依赖关系梳理模块，不要仅逐个复述文件名。
+明确区分作者或关联 Issue 说明的意图与根据 diff 推测的意图。
+图示应只画有代码依据的关键模块和交互，不要编造依赖关系。
+保持工具要求的输出 schema，将这些要求融入现有摘要和文件导览字段。
+"""
+
+[pr_reviewer]
+persistent_comment = true
+require_priority_files = true
+require_risk_assessment = true
+require_failure_modes = true
+require_ticket_analysis_review = false
+enable_review_labels_security = false
+enable_review_labels_effort = false
+num_max_findings = 5
+extra_instructions = """
+帮助人更快理解和审查 PR。优先检查模块边界、接口兼容、状态流转和错误处理。
+在 priority files 中给出建议阅读顺序及原因。
+只在证据支持时指出受影响的调用方；区分已确认的问题、潜在风险和待验证项。
+没有运行测试时不要声称测试通过或已经证明破坏了某模块。
+每个问题给出具体文件、触发条件和影响；不要为了凑数量输出格式建议。
+保持工具要求的输出 schema。
+"""
