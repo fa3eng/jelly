@@ -1,12 +1,27 @@
+import { useSyncExternalStore } from 'react';
 import { createRoot } from 'react-dom/client';
 import type { App } from 'obsidian';
 import { ChatPanel, SessionToolbar } from '@jelly/ui';
 import type { ServiceConnection } from '../rpc/client';
 import { useChat } from './use-chat';
 import { MarkdownMessage } from './markdown-message';
+import type { ReferenceDraftStore } from '../references/drafts';
+import type { ReferenceSelection } from '../references/selection';
+import { ReferenceDrafts } from '../references/reference-drafts';
 
-function ConnectedChat({ connection, app }: { connection: ServiceConnection; app: App }) {
-  const chat = useChat(connection);
+function ConnectedChat({
+  connection,
+  app,
+  referenceDrafts,
+  referenceSelection,
+}: {
+  connection: ServiceConnection;
+  app: App;
+  referenceDrafts: ReferenceDraftStore;
+  referenceSelection: ReferenceSelection;
+}) {
+  const chat = useChat(connection, referenceDrafts);
+  const { draft } = useSyncExternalStore(referenceDrafts.subscribe, referenceDrafts.getSnapshot);
   return (
     <div className="osc-chat-workspace">
       <SessionToolbar
@@ -56,7 +71,14 @@ function ConnectedChat({ connection, app }: { connection: ServiceConnection; app
           key={chat.sessionId}
           messages={chat.messages}
           status={chat.status}
-          onSubmit={(prompt) => void chat.submit(prompt)}
+          draft={draft.prompt}
+          onDraftChange={(prompt) => referenceDrafts.setPrompt(prompt)}
+          composerContent={
+            <ReferenceDrafts store={referenceDrafts} selection={referenceSelection} />
+          }
+          canSubmitWithoutPrompt={draft.references.length > 0}
+          onOpenReference={(reference) => void referenceSelection.openReference(reference)}
+          onSubmit={(prompt) => void chat.submit(prompt, structuredClone(draft.references))}
           onInterrupt={chat.interrupt}
           renderAssistant={(message) => <MarkdownMessage app={app} content={message.content} />}
         />
@@ -87,8 +109,17 @@ export function mountChatPanel(
   container: HTMLElement,
   connection: ServiceConnection,
   app: App,
+  referenceDrafts: ReferenceDraftStore,
+  referenceSelection: ReferenceSelection,
 ): () => void {
   const root = createRoot(container);
-  root.render(<ConnectedChat connection={connection} app={app} />);
+  root.render(
+    <ConnectedChat
+      connection={connection}
+      app={app}
+      referenceDrafts={referenceDrafts}
+      referenceSelection={referenceSelection}
+    />,
+  );
   return () => root.unmount();
 }

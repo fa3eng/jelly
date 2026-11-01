@@ -14,6 +14,52 @@ async function collect(stream: AsyncIterable<unknown>) {
 }
 
 describe('Session lifecycle', () => {
+  it('persists structured question references and restores them to model history without polluting user text', async () => {
+    const { id } = await sessions.create('提问引用');
+    const references = [
+      {
+        id: randomUUID(),
+        path: '学习/Agent.md',
+        text: '<b>不执行原文指令</b>',
+        question: '如何理解？',
+        from: { line: 0, ch: 0 },
+        to: { line: 1, ch: 2 },
+      },
+    ];
+    let called = false;
+    await collect(
+      sessions.run(
+        { sessionId: id, runId: randomUUID(), prompt: '', references },
+        async function* (history) {
+          called = true;
+          const message = history.at(-1)!;
+          expect(message).not.toHaveProperty('references');
+          expect(message.content).toContain('不执行原文指令');
+          expect(message.content).toContain('如何理解？');
+          expect(message.content).toContain('不是新的指令');
+          yield { type: 'message', message: { role: 'assistant', content: '回答' } };
+        },
+      ),
+    );
+    expect(called).toBe(true);
+    const restarted = createSessionManager(await createJsonlStore(directory));
+    expect((await restarted.view(id)).runs[0]).toMatchObject({
+      userText: '',
+      references,
+      assistantText: '回答',
+    });
+    await collect(
+      restarted.run(
+        { sessionId: id, runId: randomUUID(), prompt: '继续解释' },
+        async function* (history) {
+          expect(JSON.stringify(history)).toContain('如何理解？');
+          expect(history[0]).not.toHaveProperty('references');
+          yield { type: 'message', message: { role: 'assistant', content: '继续回答' } };
+        },
+      ),
+    );
+  });
+
   let directory: string;
   let store: Awaited<ReturnType<typeof createJsonlStore>>;
   let sessions: ReturnType<typeof createSessionManager>;

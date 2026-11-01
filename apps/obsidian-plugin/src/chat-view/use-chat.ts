@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
-import type { AssistantRunStatus, ChatMessage } from '@jelly/domain';
-import type { SessionSummary, SessionView } from '@jelly/contracts';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { AssistantRunStatus, ChatMessage, QuestionReference } from '@jelly/domain';
+import { chatGenerateInputSchema, type SessionSummary, type SessionView } from '@jelly/contracts';
 import { createRpcClient, type ServiceConnection } from '../rpc/client';
+import type { ReferenceDraftStore } from '../references/drafts';
 
 type RpcClient = ReturnType<typeof createRpcClient>;
 
@@ -13,7 +14,13 @@ type RpcClient = ReturnType<typeof createRpcClient>;
 function toMessages(view: SessionView): ChatMessage[] {
   return view.runs.flatMap((run) => {
     const messages: ChatMessage[] = [];
-    if (run.userText) messages.push({ id: `${run.id}:user`, role: 'user', content: run.userText });
+    if (run.userText || run.references?.length)
+      messages.push({
+        id: `${run.id}:user`,
+        role: 'user',
+        content: run.userText,
+        references: run.references,
+      });
     if (run.assistantText)
       messages.push({ id: `${run.id}:assistant`, role: 'assistant', content: run.assistantText });
     return messages;
@@ -25,7 +32,7 @@ function toMessages(view: SessionView): ChatMessage[] {
  * @param connection - Service 的 RPC 连接配置，用于创建客户端。
  * @returns 界面状态与操作函数；messages 仅用于显示，后续模型历史由 Session 读取。
  */
-export function useChat(connection: ServiceConnection) {
+export function useChat(connection: ServiceConnection, drafts?: ReferenceDraftStore) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [status, setStatus] = useState<AssistantRunStatus>('restoring');
   const [error, setError] = useState<string | null>(null);
@@ -42,11 +49,16 @@ export function useChat(connection: ServiceConnection) {
    * @param next - 当前客户端读取到的会话视图。
    * @returns 无返回值；更新选中会话、Run 视图和展示消息。
    */
-  function applyView(next: SessionView) {
-    selected.current = next.id;
-    setView(next);
-    setMessages(toMessages(next));
-  }
+  const applyView = useCallback(
+    (next: SessionView) => {
+      selected.current = next.id;
+      drafts?.activate(next.id);
+      drafts?.reconcileSending(next.id, next.runs);
+      setView(next);
+      setMessages(toMessages(next));
+    },
+    [drafts],
+  );
 
   /**
    * 读取会话视图与列表，再刷新界面；供初始化、切换和提交结束后复用。
@@ -55,13 +67,16 @@ export function useChat(connection: ServiceConnection) {
    * @returns 读取和界面更新完成后兑现的 Promise。
    * @throws RPC 读取失败，由调用方更新错误状态。
    */
-  async function load(client: RpcClient, id: string) {
-    const next = await client.client.sessions.read({ sessionId: id });
-    const list = await client.client.sessions.list({});
-    if (api.current !== client) return;
-    applyView(next);
-    setSessions(list);
-  }
+  const load = useCallback(
+    async (client: RpcClient, id: string) => {
+      const next = await client.client.sessions.read({ sessionId: id });
+      const list = await client.client.sessions.list({});
+      if (api.current !== client) return;
+      applyView(next);
+      setSessions(list);
+    },
+    [applyView],
+  );
 
   useEffect(() => {
     const client = createRpcClient(connection);
@@ -80,7 +95,11 @@ export function useChat(connection: ServiceConnection) {
       try {
         const list = await client.client.sessions.list({});
         if (api.current !== client) return;
-        const id = list[0]?.id ?? (await client.client.sessions.create({ title: '新会话' })).id;
+        const preferred = drafts?.getSnapshot().sessionId;
+        const id =
+          list.find((session) => session.id === preferred)?.id ??
+          list[0]?.id ??
+          (await client.client.sessions.create({ title: '新会话' })).id;
         if (api.current !== client) return;
         await load(client, id);
         if (api.current === client) setStatus('idle');
@@ -99,7 +118,7 @@ export function useChat(connection: ServiceConnection) {
       client.close();
       if (api.current === client) api.current = null;
     };
-  }, [connection]);
+  }, [connection, drafts, load]);
 
   /**
    * 响应新建、切换或刷新会话；由会话选择器与按钮调用。
@@ -134,19 +153,31 @@ export function useChat(connection: ServiceConnection) {
    * @param prompt - 用户输入的本轮问题。
    * @returns 请求与结束后刷新完成时兑现的 Promise；取消或失败反映到界面状态。
    */
-  async function submit(prompt: string) {
+  async function submit(prompt: string, references: QuestionReference[] = []) {
     const client = api.current;
     const sessionId = selected.current;
-    if (!client || !sessionId || active.current || loading.current) return;
-    if (view?.runs.some((run) => run.status === 'running')) return;
+    if (!client || !sessionId || active.current || loading.current) return false;
+    if (view?.runs.some((run) => run.status === 'running')) return false;
+    const runId = crypto.randomUUID();
+    if (
+      !chatGenerateInputSchema.safeParse({
+        sessionId,
+        runId,
+        prompt,
+        references,
+      }).success
+    ) {
+      setError('请检查本轮引用：最多 30 条，每条原文最多 20,000 字符，合计最多 120,000 字符。');
+      return false;
+    }
 
     const controller = new AbortController();
+    drafts?.startSending(sessionId, runId, prompt, references);
     active.current = controller;
-    const runId = crypto.randomUUID();
     const assistantId = `${runId}:assistant`;
     setMessages((previous) => [
       ...previous,
-      { id: `${runId}:user`, role: 'user', content: prompt },
+      { id: `${runId}:user`, role: 'user', content: prompt, references },
       { id: assistantId, role: 'assistant', content: '' },
     ]);
     setError(null);
@@ -158,7 +189,7 @@ export function useChat(connection: ServiceConnection) {
 
     try {
       const events = await client.client.chat.stream(
-        { sessionId, runId, prompt },
+        { sessionId, runId, prompt, ...(references.length ? { references } : {}) },
         { signal: controller.signal },
       );
       for await (const event of events) {
@@ -217,6 +248,10 @@ export function useChat(connection: ServiceConnection) {
         }
       } else if (active.current === controller) active.current = null;
     }
+    // done 是服务端已保存完成的确认；随后刷新失败也不能把已发送内容放回输入区。
+    const success = completed;
+    drafts?.settleSending(sessionId, runId, success);
+    return success;
   }
 
   const remoteRunning = view?.runs.some((run) => run.status === 'running') ?? false;

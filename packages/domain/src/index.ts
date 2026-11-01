@@ -1,9 +1,20 @@
 export type ChatRole = 'user' | 'assistant';
 
+/** 用户主动附加的 Markdown 提问引用；文字是捕获时的快照。 */
+export interface QuestionReference {
+  id: string;
+  path: string;
+  text: string;
+  from: { line: number; ch: number };
+  to: { line: number; ch: number };
+  question: string;
+}
+
 export interface ChatMessage {
   id: string;
   role: ChatRole;
   content: string;
+  references?: QuestionReference[];
 }
 
 export type ConversationMessage = Pick<ChatMessage, 'role' | 'content'>;

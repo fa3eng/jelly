@@ -131,6 +131,41 @@ describe('Session RPC over HTTP', () => {
     ).toEqual({ text: '独立问题' });
   });
 
+  it('round-trips a reference-only batch through HTTP and JSONL recovery', async () => {
+    const { client } = setup();
+    const { id } = await client.sessions.create({ title: '引用提问' });
+    const references = [
+      {
+        id: randomUUID(),
+        path: 'Session.md',
+        text: 'Session 保存历史',
+        question: '和 Run 什么关系？',
+        from: { line: 0, ch: 0 },
+        to: { line: 0, ch: 12 },
+      },
+      {
+        id: randomUUID(),
+        path: '工具.md',
+        text: '工具结果返回模型',
+        question: '结合第一段解释',
+        from: { line: 3, ch: 0 },
+        to: { line: 3, ch: 9 },
+      },
+    ];
+    const events = await collect(
+      await client.chat.stream({ sessionId: id, runId: randomUUID(), prompt: '', references }),
+    );
+    expect(events.at(-1)).toEqual({ type: 'done' });
+    const delta = events.find((event) => event.type === 'text-delta');
+    expect(delta?.type === 'text-delta' && delta.delta).toContain('和 Run 什么关系？');
+    expect(delta?.type === 'text-delta' && delta.delta).toContain('结合第一段解释');
+    sessions = createSessionManager(await createJsonlStore(directory));
+    await sessions.initialize();
+    const restarted = setup().client;
+    const saved = await restarted.sessions.read({ sessionId: id });
+    expect(saved.runs[0]).toMatchObject({ status: 'completed', userText: '', references });
+  });
+
   it('saves error status without emitting done or leaking provider details', async () => {
     const { client } = setup({ fail: true });
     const { id } = await client.sessions.create({ title: '失败会话' });

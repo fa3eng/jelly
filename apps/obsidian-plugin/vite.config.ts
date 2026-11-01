@@ -21,7 +21,7 @@ export default defineConfig({
     emptyOutDir: true,
     copyPublicDir: true,
     rollupOptions: {
-      external: [/^node:/, 'obsidian', '@electron/remote'],
+      external: [/^node:/, /^@codemirror\//, 'obsidian', '@electron/remote'],
       output: {
         codeSplitting: false,
       },

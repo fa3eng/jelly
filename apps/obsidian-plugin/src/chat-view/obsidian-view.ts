@@ -1,6 +1,8 @@
 import { ItemView, type WorkspaceLeaf } from 'obsidian';
 import { mountChatPanel } from './react-view';
 import type { ServiceConnection } from '../rpc/client';
+import type { ReferenceDraftStore } from '../references/drafts';
+import type { ReferenceSelection } from '../references/selection';
 
 export const VIEW_TYPE_JELLY = 'jelly-view';
 
@@ -12,6 +14,8 @@ export class JellyView extends ItemView {
     private readonly getConnection: () => ServiceConnection | undefined,
     private readonly getStatus: () => string,
     private readonly openSettings: () => void,
+    private readonly referenceDrafts: ReferenceDraftStore,
+    private readonly referenceSelection: ReferenceSelection,
   ) {
     super(leaf);
   }
@@ -44,7 +48,13 @@ export class JellyView extends ItemView {
       return;
     }
     const mountPoint = this.contentEl.createDiv({ cls: 'osc-view-host' });
-    this.unmountChatPanel = mountChatPanel(mountPoint, connection, this.app);
+    this.unmountChatPanel = mountChatPanel(
+      mountPoint,
+      connection,
+      this.app,
+      this.referenceDrafts,
+      this.referenceSelection,
+    );
   }
 
   async onClose(): Promise<void> {

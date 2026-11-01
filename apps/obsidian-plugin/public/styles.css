@@ -405,7 +405,7 @@
   background: transparent;
   box-shadow: none;
   color: var(--text-normal);
-  resize: vertical;
+  resize: none;
   font: inherit;
   font-size: 13px;
   line-height: 1.6;
@@ -549,4 +549,173 @@
   .osc-chat-composer {
     transition: none;
   }
+}
+
+/* 提问引用只存在于插件界面，不向笔记写入标记。 */
+.osc-reference-popover {
+  position: fixed;
+  z-index: 1002;
+  max-width: calc(100vw - 16px);
+  padding: 6px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  box-shadow: var(--shadow-l);
+}
+.osc-reference-editor {
+  width: 360px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: calc(100vh - 16px);
+  overflow-y: auto;
+}
+.osc-reference-editor textarea,
+.osc-reference-card textarea {
+  display: block;
+  width: 100%;
+  resize: none;
+  min-height: 64px;
+  box-sizing: border-box;
+}
+.osc-reference-actions,
+.osc-reference-pending {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.osc-reference-drafts {
+  max-height: 320px;
+  overflow-y: auto;
+  font-size: var(--font-ui-small);
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+.osc-reference-drafts:empty { display: none; }
+.osc-reference-card {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+.osc-reference-card:last-child { border-bottom: none; }
+.osc-reference-pending { padding: 8px 0; }
+
+/* 轻量选区入口与位置锚点：原文留在编辑器中。 */
+.osc-selection-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 9px;
+  box-shadow: var(--shadow-s);
+}
+.osc-selection-toolbar .osc-selection-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text-normal);
+  box-shadow: none;
+  font-size: var(--font-ui-small);
+}
+.osc-selection-toolbar .osc-selection-action:hover:not(:disabled) {
+  background: var(--background-modifier-hover);
+}
+.osc-selection-toolbar .osc-selection-action:disabled {
+  color: var(--text-faint);
+  opacity: 1;
+}
+.osc-selection-action svg,
+.osc-reference-anchor svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+button.osc-reference-anchor {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  min-width: 0;
+  height: auto;
+  padding: 3px 6px;
+  border: none;
+  border-radius: 5px;
+  box-shadow: none;
+  background: var(--background-primary-alt);
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  text-align: left;
+}
+.osc-reference-anchor span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+button.osc-reference-anchor:hover {
+  color: var(--text-normal);
+  background: var(--background-modifier-hover);
+}
+.osc-reference-editor {
+  width: 320px;
+  gap: 8px;
+  padding: 10px;
+  box-shadow: var(--shadow-s);
+}
+.osc-reference-editor > .osc-reference-anchor { align-self: flex-start; }
+.osc-reference-editor textarea {
+  min-height: 70px;
+  padding: 7px 2px;
+  border: none;
+  box-shadow: none;
+  background: transparent;
+}
+.osc-reference-editor .osc-reference-actions { justify-content: flex-end; gap: 6px; }
+.osc-reference-shortcut {
+  margin-right: auto;
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
+}
+.osc-reference-editor button.osc-reference-cancel {
+  box-shadow: none;
+  background: transparent;
+}
+.osc-reference-drafts {
+  max-height: 240px;
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+  border-bottom: 1px dashed var(--background-modifier-border);
+}
+.osc-reference-drafts .osc-reference-card {
+  padding: 5px 0 7px;
+  border-bottom: none;
+}
+.osc-reference-drafts .osc-reference-actions { flex-wrap: nowrap; gap: 4px; }
+.osc-reference-drafts .osc-reference-remove {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  box-shadow: none;
+  background: transparent;
+  color: var(--text-muted);
+}
+.osc-chat-composer .osc-reference-card textarea {
+  min-height: 30px;
+  max-height: 110px;
+  padding: 6px 2px;
+}
+.osc-message-references { display: grid; gap: 8px; }
+.osc-sent-reference { min-width: 0; }
+.osc-sent-reference p {
+  margin: 4px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }

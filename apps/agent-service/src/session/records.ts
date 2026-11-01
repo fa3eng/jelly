@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { questionReferencesSchema } from '@jelly/contracts';
 
 const functionCallSchema = z.object({
   id: z.string().min(1),
@@ -8,7 +9,11 @@ const functionCallSchema = z.object({
 
 // 对应当前 Runtime 已支持的文字消息与函数工具调用。
 export const messageSchema = z.discriminatedUnion('role', [
-  z.object({ role: z.literal('user'), content: z.string() }),
+  z.object({
+    role: z.literal('user'),
+    content: z.string(),
+    references: questionReferencesSchema.optional(),
+  }),
   z.object({
     role: z.literal('assistant'),
     content: z.string(),

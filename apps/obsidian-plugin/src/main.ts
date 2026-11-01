@@ -11,6 +11,8 @@ import { prepareServiceBundle } from './agent-service/bundle';
 import { createUtilityLauncher, getHostUtilityProcess } from './agent-service/utility-process';
 import { JellyView, VIEW_TYPE_JELLY } from './chat-view/obsidian-view';
 import { startAgentService, type AgentServiceHandle } from './agent-service/process';
+import { ReferenceDraftStore } from './references/drafts';
+import { ReferenceSelection } from './references/selection';
 
 declare const __JELLY_AGENT_SERVICE_ENTRY__: string;
 declare const __JELLY_AGENT_SERVICE_SOURCE__: string;
@@ -23,11 +25,42 @@ export default class JellyPlugin extends Plugin {
   private agentService?: AgentServiceHandle;
   private serviceChange: Promise<void> = Promise.resolve();
   private unloaded = false;
+  private referenceDrafts!: ReferenceDraftStore;
+  private referenceSelection!: ReferenceSelection;
+  private savedDrafts: unknown;
+  private saveQueue = Promise.resolve();
   settings: JellySettings = readSettings(null);
   serviceStatus = '请先在 Jelly 设置中填写 API Key、API 地址和模型名称。';
 
   async onload(): Promise<void> {
-    this.settings = readSettings(await this.loadData());
+    const data = await this.loadData();
+    this.settings = readSettings(data);
+    this.savedDrafts = data?.questionDrafts;
+    this.referenceDrafts = new ReferenceDraftStore(this.savedDrafts, async (drafts) => {
+      this.savedDrafts = drafts;
+      await this.savePluginData();
+    });
+    this.referenceSelection = new ReferenceSelection(this.app, this.referenceDrafts, () =>
+      this.openJellyView(),
+    );
+    this.addChild(this.referenceSelection);
+    this.registerEditorExtension(this.referenceSelection.extension());
+    this.registerEvent(
+      this.app.workspace.on('editor-menu', (menu, editor, info) => {
+        if (editor.getSelection().trim())
+          menu.addItem((item) =>
+            item
+              .setTitle('加入 Jelly 提问引用')
+              .setIcon('message-square')
+              .onClick(() => this.referenceSelection.fromEditor(editor, info)),
+          );
+      }),
+    );
+    this.addCommand({
+      id: 'quote-selection',
+      name: '引用选中文字提问',
+      editorCallback: (editor, info) => this.referenceSelection.fromEditor(editor, info),
+    });
     this.addSettingTab(new JellySettingTab(this.app, this));
     this.registerView(
       VIEW_TYPE_JELLY,
@@ -37,6 +70,8 @@ export default class JellyPlugin extends Plugin {
           () => this.agentService,
           () => this.serviceStatus,
           () => this.openSettings(),
+          this.referenceDrafts,
+          this.referenceSelection,
         ),
     );
     this.addCommand({ id: 'open', name: 'Open', callback: () => this.openJellyView() });
@@ -53,7 +88,7 @@ export default class JellyPlugin extends Plugin {
     const environment = serviceEnvironment(settings, apiKey, this.vaultDirectory());
     this.settings = { baseURL: environment.OPENAI_BASE_URL!, model: environment.OPENAI_MODEL! };
     this.app.secretStorage.setSecret(API_KEY_SECRET, environment.OPENAI_API_KEY!);
-    await this.saveData(this.settings);
+    await this.savePluginData();
     await this.restartService();
   }
 
@@ -65,6 +100,13 @@ export default class JellyPlugin extends Plugin {
     ).setting;
     settings.open();
     settings.openTabById(this.manifest.id);
+  }
+
+  private savePluginData(): Promise<void> {
+    const data = structuredClone({ ...this.settings, questionDrafts: this.savedDrafts });
+    const save = this.saveQueue.catch(() => {}).then(() => this.saveData(data));
+    this.saveQueue = save;
+    return save;
   }
 
   private vaultDirectory(): string {
