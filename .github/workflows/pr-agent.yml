@@ -58,7 +58,7 @@ jobs:
           CONFIG__MODEL_REASONING: ${{ vars.PR_AGENT_MODEL }}
           CONFIG__FALLBACK_MODELS: '[]'
           CONFIG__CUSTOM_MODEL_MAX_TOKENS: ${{ vars.PR_AGENT_CONTEXT_TOKENS }}
-          CONFIG__MAX_OUTPUT_TOKENS: '4096'
+          CONFIG__MAX_OUTPUT_TOKENS: '16384'
           CONFIG__RESPONSE_LANGUAGE: zh-CN
           CONFIG__USE_GLOBAL_SETTINGS_FILE: 'false'
           # Keep the initial integration PR comment-only before repo settings merge.
