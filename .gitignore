@@ -18,6 +18,7 @@ dist/
 # Public documentation is opt-in. Local tutorials, plans and drafts stay on disk.
 /docs/*
 !/docs/release-notes.md
+!/docs/development-workflow.md
 !/docs/architecture/
 /docs/architecture/*
 !/docs/architecture/current-runtime.md
