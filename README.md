@@ -31,6 +31,8 @@ The desktop service uses Node filesystem APIs to read and write files within the
 
 Use Node.js 20.19+ and pnpm 10. Run `pnpm install`, then `pnpm run dev` for the demo vault or `pnpm build` for the three production plugin files. `pnpm check` and `pnpm test` run local validation without model credentials. See the Chinese guide below for environment setup and release commands.
 
+Task PRs target `develop` by default. Integrated changes are validated there before merging into stable `main`; release tags are created from `main`. See [branching and release conventions](docs/development-workflow.md).
+
 The project uses the [MIT license](LICENSE). Bundled dependency licenses are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and retained in the plugin bundle.
 
 ---
@@ -150,6 +152,8 @@ Runtime 提供通用 `beforeModel` Hooks，依次运行并返回 `append-context
 
 ## 架构与贡献
 
+任务 PR 默认合入 `develop`，集中验证通过后再合入稳定分支 `main`，正式版本从 `main` 打 Tag。完整流程见 [分支管理与发版约定](docs/development-workflow.md)。
+
 Obsidian 插件负责宿主生命周期和侧栏；UI、Agent Runtime 与通信契约分别位于独立 workspace 包中。本地 Agent Service 负责模型传输、文件工具和会话持久化。
 
 - [当前架构](docs/architecture/current-runtime.md)
@@ -165,6 +169,8 @@ pnpm build
 自动化检查不需要真实模型凭据。宿主启动方式已在 macOS、Electron 43.3.0 上验证；Windows、Linux、其他安装程序版本及社区审核仍需验证。实际模型兼容性取决于服务商与模型。
 
 ## 发布
+
+先在 `develop` 完成整体验证并通过普通 Merge 晋级到 `main`，再从已验证的 `main` 提交创建版本 Tag。验证包、紧急修复和具体步骤见 [分支管理与发版约定](docs/development-workflow.md)。
 
 依赖变更后运行 `pnpm licenses:generate` 更新已提交的许可证声明；正式构建直接使用这些声明，避免依赖包管理器的本机存储路径。
 
