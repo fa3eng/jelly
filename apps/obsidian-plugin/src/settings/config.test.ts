@@ -32,6 +32,7 @@ describe('user configuration', () => {
     expect(env.OPENAI_MODEL).toBe('deepseek-flash');
     expect(env.JELLY_DOCS_DIRECTORY).toBe(vault);
     expect(env.JELLY_SESSION_DIRECTORY).toBe(join(vault, '.jelly', 'sessions'));
+    expect(env.JELLY_SKILLS_DIRECTORY).toBe(join(vault, '.jelly', 'skills'));
     expect(env.OPENAI_PROXY_URL).toBeUndefined();
     expect(env.OPENAI_PROXY_CA_PATH).toBeUndefined();
     expect(env.JELLY_SYSTEM_PROMPT).toBeUndefined();

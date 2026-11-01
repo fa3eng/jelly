@@ -9,6 +9,7 @@ Jelly is a desktop Obsidian AI assistant named after the author's cat. Chat with
 - Local text extraction from PDFs; scanned PDFs need OCR elsewhere.
 - Markdown creation, version-checked editing, and deletion when requested.
 - An independent Agent Service process using Obsidian's bundled runtime; users do not need to install Node.js separately.
+- On-demand task instructions from standard `SKILL.md` files installed in the vault's `.jelly/skills/` directory.
 
 ## Install and configure
 
@@ -108,6 +109,46 @@ pnpm build
 - 生产版本的文件工具范围限定为当前 Vault；开发模式使用 `.env` 时可显式指定 Vault 外目录，分别用于文件工具与会话存储。
 - 会话以本地 JSONL 文件保存，包含消息和工具结果，可能包含资料正文。请将它们视为个人数据，不要提交到公开仓库。
 - 当前版本不提供扫描件 OCR、语义检索或自动上下文压缩。
+
+## Skills：按需加载任务规范
+
+将你编写或信任的 Skill 放入当前 Vault 的 `.jelly/skills/<name>/SKILL.md`。
+例如，把仓库中的 [整理笔记示例](examples/skills/organize-notes/SKILL.md) 复制到：
+
+```text
+<Vault>/.jelly/skills/organize-notes/SKILL.md
+```
+
+文件采用 [Agent Skills 标准格式](https://agentskills.io/specification)：
+
+```markdown
+---
+name: organize-notes
+description: 将口述或零散笔记整理成清楚的 Markdown；用户要求整理已有笔记时使用。
+---
+
+# 整理笔记
+
+- 保留原意和不确定性，删除口头重复。
+- 按内容组织标题，不强行套模板。
+- 用户只要求整理时，先在对话中交付；明确要求保存后才写文件。
+```
+
+`name` 必须与父目录同名，最多 64 个字符，使用小写字母、数字和单个连字符；`description` 必需，最多 1024 个字符，说明做什么及何时使用。支持正常 YAML 语法，包括多行描述。标准可选字段可解析，但 `allowed-tools` 不执行，不能用它授予或限制工具权限。
+
+在已经运行新版代码的服务中，新增、修改、删除 Skill **无需重启服务**。直接发送“使用 organize-notes 整理下面的笔记：……”即可试用。目录不存在时普通聊天照常运行，后续创建目录也能发现。第一版没有 Skill 选择器或斜杠命令，模型依据用户要求和目录描述选择工具。
+
+服务维护元数据、文件位置与内容版本，不长期保存正文。发现新文件或变化文件时会有界读取以解析、计算版本，然后丢弃正文；`load_skill` 每次重新校验并读取当前文件。模型最初只收到名称、描述与版本，需要时才取得正文。文件内容与已加载规范会发送给配置的模型服务。
+
+Skill Manager 监听目录，合并保存事件；每次模型请求前再核对文件，补偿监听遗漏。初始目录及增删改通知追加为 Session 内部事件，发送模型时转换成带来源说明的 user 消息，不显示为用户聊天气泡。变化不会唤醒空闲会话或打断正在进行的模型请求，而是在该会话下一次模型请求前提供。删除或格式损坏的 Skill 不再可加载；旧正文仍作为历史保留，模型会收到不可用通知。
+
+工具 Schema 和系统规则不随目录改变。相同版本正文仍在当前上下文时，重复调用返回 `already_in_context` 简短结果；正文变化后返回新版及 revision。状态按 Run 从真实可见的完整成功工具结果重建，不跨会话共享。异常运行中的工具记录按历史说明恢复，不误判为仍已加载的规范。旧 JSONL 会话继续可读，缺少目录事件时下次运行追加初始目录，不改写旧历史。
+
+Runtime 提供通用 `beforeModel` Hooks，依次运行并返回 `append-context` 效果；Session 保存成功后才继续请求模型。Hook 报错或取消会结束本轮，不静默忽略。Skill 同步由 Service 注册，Runtime 不负责 Skill 文件业务。
+
+当前只支持 `SKILL.md` 本身，不读取其附带资源、不执行脚本。文件最多 64 KiB，目录或文件软链接、格式错误等会被跳过；服务启动诊断写入 stderr，动态诊断可从 Manager 目录状态读取，目前没有诊断面板。正文规范不保证模型每次都遵循，也不扩大文件工具权限。监听行为已在本机测试，其他系统依靠请求边界核对保证可发现变化，原生监听行为仍需实机验证。
+
+开发模式默认使用 `<JELLY_DOCS_DIRECTORY>/.jelly/skills`，可设置绝对路径 `JELLY_SKILLS_DIRECTORY` 覆盖；生产环境固定使用当前 Vault 的目录。
 
 ## 架构与贡献
 

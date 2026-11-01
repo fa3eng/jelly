@@ -11,6 +11,9 @@ import { createProjectDocTools } from '../tools/project-docs/project-docs';
 import { createModelTransport } from './model-transport';
 import { createJsonlStore } from '../session/jsonl-store';
 import { createSessionManager, type SessionManager } from '../session/session';
+import { createSkillManager } from '../skills/manager';
+import { createSkillCatalogHook } from '../skills/hooks';
+import { createSkillLoadingState } from '../tools/skills/load-skill';
 
 /**
  * 创建 Session、Runtime 与模型传输，并为 HTTP 应用提供展示事件流。
@@ -22,27 +25,29 @@ export async function createAgentStream(
 ): Promise<GenerateStream & { sessions: SessionManager; close(): Promise<void> }> {
   const sessions = createSessionManager(await createJsonlStore(config.sessionDirectory));
   await sessions.initialize();
-  const tools = createToolRegistry(await createProjectDocTools(config.docsDirectory));
+  const skillManager = await createSkillManager(config.skillsDirectory);
+  for (const diagnostic of skillManager.getCatalog().diagnostics) {
+    console.warn(`[Jelly Skills] ${diagnostic.path}: ${diagnostic.message}`);
+  }
+  let projectTools;
+  let transport;
+  try {
+    projectTools = await createProjectDocTools(config.docsDirectory);
+    transport = await createModelTransport(config);
+  } catch (error) {
+    skillManager.close();
+    throw error;
+  }
   const prompt = createSystemPrompt(config);
-  const context = createContextBuilder({
-    getSystemPrompt: prompt.getSystemPrompt,
-    getTools: () => tools.getDeclarations(),
-  });
-
-  const transport = await createModelTransport(config);
-  const agent = createAgent({
-    modelTurn: createOpenAIModelTurn({
-      client: {
-        apiKey: config.apiKey,
-        baseURL: config.baseURL,
-        maxRetries: 0,
-        ...transport.client,
-      },
-      model: config.model,
-      reasoningEffort: config.reasoningEffort,
-    }),
-    tools,
-    context,
+  const modelTurn = createOpenAIModelTurn({
+    client: {
+      apiKey: config.apiKey,
+      baseURL: config.baseURL,
+      maxRetries: 0,
+      ...transport.client,
+    },
+    model: config.model,
+    reasoningEffort: config.reasoningEffort,
   });
 
   /**
@@ -52,8 +57,25 @@ export async function createAgentStream(
    * @yields 已经过滤内部 message 项的界面展示事件。
    */
   const generateStream: GenerateStream = async function* (input, options) {
+    const loading = createSkillLoadingState(skillManager);
+    const tools = createToolRegistry([...projectTools, loading.tool]);
+    const agent = createAgent({
+      modelTurn,
+      tools,
+      context: createContextBuilder({
+        getSystemPrompt: prompt.getSystemPrompt,
+        getTools: () => tools.getDeclarations(),
+      }),
+      hooks: { beforeModel: [createSkillCatalogHook(skillManager), loading.beforeModel] },
+    });
     yield* sessions.run(input, agent.run, options);
   };
 
-  return Object.assign(generateStream, { sessions, close: () => transport.close() });
+  return Object.assign(generateStream, {
+    sessions,
+    close: () => {
+      skillManager.close();
+      return transport.close();
+    },
+  });
 }

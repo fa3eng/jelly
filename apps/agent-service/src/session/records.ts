@@ -22,6 +22,11 @@ export const messageSchema = z.discriminatedUnion('role', [
 ]);
 
 export const finishedStatusSchema = z.enum(['completed', 'cancelled', 'interrupted', 'error']);
+export const runtimeContextSchema = z.object({
+  kind: z.string().min(1),
+  content: z.string(),
+  data: z.json().optional(),
+});
 
 export const recordSchema = z.discriminatedUnion('type', [
   z.object({
@@ -32,6 +37,12 @@ export const recordSchema = z.discriminatedUnion('type', [
     at: z.iso.datetime(),
   }),
   z.object({ type: z.literal('run-started'), runId: z.uuid(), at: z.iso.datetime() }),
+  z.object({
+    type: z.literal('context-added'),
+    runId: z.uuid(),
+    context: runtimeContextSchema,
+    at: z.iso.datetime(),
+  }),
   z.object({
     type: z.literal('message-added'),
     runId: z.uuid(),

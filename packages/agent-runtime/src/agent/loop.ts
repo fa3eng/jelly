@@ -3,15 +3,21 @@ import type { AgentOutputEvent } from '@jelly/domain';
 import type { ContextBuilder } from '../context/context';
 import type { ToolRegistry } from '../tools/registry';
 import type { ModelTurn, ModelTurnFunction } from './model-turn';
+import { contextToMessage, type AgentHooks, type RuntimeContext } from './hooks';
 
 export type AgentMessage = ChatCompletionMessageParam;
 
 /** Loop 的内部输出；message 供 Session 保存，其他项供界面显示。 */
-export type AgentStreamItem = AgentOutputEvent | { type: 'message'; message: AgentMessage };
+export type AgentStreamItem =
+  | AgentOutputEvent
+  | { type: 'message'; message: AgentMessage }
+  | { type: 'context-added'; context: RuntimeContext };
 
 export interface AgentRunOptions {
   /** 控制模型请求与工具执行的取消，不承载保存消息的回调。 */
   signal?: AbortSignal;
+  /** Restored harness contexts; not reconstructed from user-authored text. */
+  contexts?: readonly RuntimeContext[];
 }
 
 export interface AgentRunResult {
@@ -28,6 +34,7 @@ export function createAgent(dependencies: {
   modelTurn: ModelTurnFunction;
   tools: ToolRegistry;
   context: ContextBuilder;
+  hooks?: AgentHooks;
 }) {
   /**
    * 执行一次用户触发的模型与工具循环；由 Session.run 创建并消费。
@@ -42,10 +49,27 @@ export function createAgent(dependencies: {
     options?: AgentRunOptions,
   ): AsyncGenerator<AgentStreamItem, AgentRunResult> {
     const messages = structuredClone(history);
+    const contexts = structuredClone([...(options?.contexts ?? [])]);
     let text = '';
 
     while (true) {
       options?.signal?.throwIfAborted();
+      for (const hook of dependencies.hooks?.beforeModel ?? []) {
+        const effects = await hook({
+          messages: structuredClone(messages),
+          contexts: structuredClone(contexts),
+          signal: options?.signal,
+        });
+        options?.signal?.throwIfAborted();
+        for (const effect of effects) {
+          const context = structuredClone(effect.context);
+          // The consumer persists this item before resuming the generator.
+          yield { type: 'context-added', context: structuredClone(context) };
+          options?.signal?.throwIfAborted();
+          contexts.push(context);
+          messages.push(contextToMessage(context));
+        }
+      }
       const context = dependencies.context.build(messages);
       let turn: ModelTurn | undefined;
       for await (const event of dependencies.modelTurn(context.messages, context.tools, options)) {
