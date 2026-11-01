@@ -21,7 +21,7 @@ jobs:
       github.event.sender.type != 'Bot' &&
       github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 65
     steps:
       - name: Check model configuration
         env:
@@ -34,8 +34,8 @@ jobs:
           test -n "$API_KEY" || { echo 'Missing PR_AGENT_API_KEY secret'; exit 1; }
           test -n "$API_BASE" || { echo 'Missing PR_AGENT_API_BASE variable'; exit 1; }
           test -n "$MODEL" || { echo 'Missing PR_AGENT_MODEL variable'; exit 1; }
-          [[ "$CONTEXT_TOKENS" =~ ^[0-9]+$ ]] && (( CONTEXT_TOKENS > 4096 )) || {
-            echo 'PR_AGENT_CONTEXT_TOKENS must be an integer greater than 4096'; exit 1;
+          [[ "$CONTEXT_TOKENS" =~ ^[0-9]+$ ]] && (( CONTEXT_TOKENS > 393216 )) || {
+            echo 'PR_AGENT_CONTEXT_TOKENS must be an integer greater than the 393216-token output limit'; exit 1;
           }
 
       - name: Check out the trusted PR-Agent source (not the PR under review)
@@ -58,8 +58,10 @@ jobs:
           CONFIG__MODEL_REASONING: ${{ vars.PR_AGENT_MODEL }}
           CONFIG__FALLBACK_MODELS: '[]'
           CONFIG__CUSTOM_MODEL_MAX_TOKENS: ${{ vars.PR_AGENT_CONTEXT_TOKENS }}
-          CONFIG__MAX_OUTPUT_TOKENS: '16384'
-          CONFIG__REASONING_EFFORT: low
+          CONFIG__MAX_MODEL_TOKENS: ${{ vars.PR_AGENT_CONTEXT_TOKENS }}
+          CONFIG__MAX_OUTPUT_TOKENS: '393216'
+          CONFIG__AI_TIMEOUT: '1800'
+          CONFIG__REASONING_EFFORT: high
           CONFIG__RESPONSE_LANGUAGE: zh-CN
           CONFIG__USE_GLOBAL_SETTINGS_FILE: 'false'
           # Keep the initial integration PR comment-only before repo settings merge.
@@ -84,6 +86,7 @@ jobs:
             -e OPENAI_KEY -e OPENAI__API_BASE \
             -e CONFIG__MODEL -e CONFIG__MODEL_WEAK -e CONFIG__MODEL_REASONING \
             -e CONFIG__FALLBACK_MODELS -e CONFIG__CUSTOM_MODEL_MAX_TOKENS \
+            -e CONFIG__MAX_MODEL_TOKENS -e CONFIG__AI_TIMEOUT \
             -e CONFIG__MAX_OUTPUT_TOKENS -e CONFIG__REASONING_EFFORT -e CONFIG__RESPONSE_LANGUAGE \
             -e CONFIG__USE_GLOBAL_SETTINGS_FILE \
             -e PR_DESCRIPTION__PUBLISH_DESCRIPTION_AS_COMMENT \
