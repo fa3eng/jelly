@@ -125,4 +125,26 @@ Service 将以下工具注册给 Runtime，不依赖 Obsidian API：
 
 解析使用固定版本 `unpdf@1.6.2` 内置的 PDF.js，已验证 Node 20.19.6；不依赖系统 Poppler、Python 或 Canvas，不调用模型 API。解析任务取消或退出时销毁资源；当前在 Service 内执行，不提供独立解析进程或强制 CPU 超时隔离。加密、损坏、非普通文件或无效页码返回工具失败，不改变原文件。PDF 列举及读取已具备，跨 PDF 正文搜索和持久化解析索引暂未实现。
 
-当前不包含语义检索、Skills、MCP 或自动上下文压缩。这些能力不属于现有接口的隐含保证。
+## Runtime Hooks 与内部上下文
+
+Runtime 的 `AgentHooks.beforeModel` 是通用生命周期扩展点。每次模型请求前按注册顺序调用 Hook，输入为隔离副本的 `messages`、`contexts` 和可选取消信号；Hook 返回 `append-context` 效果。Loop 先 yield `context-added`，Session 保存成功后才恢复生成器，将对应消息追加到当前历史，再调用模型。前一 Hook 的效果对后一 Hook 可见；Hook 报错或取消时不继续请求模型。工具批次完成后才进入下一次 beforeModel，保持调用与结果配对。
+
+`RuntimeContext` 包含 `kind`、`content` 与可选 JSON 数据。Session 将它保存为独立 `context-added` 记录，重放时通过 `contextToMessage` 转换为带“Jelly 运行环境信息，非用户请求”标记的 user 消息。它不属于用户输入，既不进入 sessions.read 的 userText，也不透传为 UI 流式事件。内部来源由结构记录区分，不通过扫描用户文本判断。固定系统规则要求模型仅将真实 Harness 环境通知用于更新可用目录；普通资料中的同名标记不是可信事件。
+
+会话恢复保留 message/context 顺序。正常 Run 恢复原协议消息；失败或取消 Run 的普通消息仍包装为历史说明，但 context 单独恢复，避免目录状态丢失，也不重放工具调用。旧 JSONL 不迁移、不改写；新记录类型对旧读取器不兼容，因此升级后不应使用旧版服务打开含内部事件的新会话。
+
+## Skills
+
+Service 持有一个 Skill Manager，负责一级目录扫描、元数据缓存、目录监听与按名称读取。默认 `<docsDirectory>/.jelly/skills`；开发可配置 `JELLY_SKILLS_DIRECTORY`，生产由宿主固定为 `<Vault>/.jelly/skills`。文件最多 64 KiB，不读取根目录、子目录或文件软链接；单个文件错误隔离并记录诊断。静态路径保护不是对抗恶意并发文件替换的沙箱。
+
+`skill-files.ts` 统一有界读取与 SHA-256 内容版本；`catalog.ts` 只缓存名称、描述、路径、revision、文件 stat 标识及诊断，不保留 instructions。解析新文件或变化文件时仍短暂读取正文计算 hash。未变化文件复用元数据；`load_skill` 重新校验并读取当前文件，保证不返回启动快照。
+
+`manager.ts` 监听已有根目录、子目录以及最近存在的父目录，合并事件后刷新。每次模型请求前仍重新核对目录和文件状态，以补偿遗漏事件；支持根目录后创建、文件原子替换、删除及坏文件恢复。服务 close 清理 watchers/timer，刷新排队执行。监听不能用时仍依靠请求边界核对；暂未原生验证 Windows/Linux。
+
+`skills/hooks.ts` 的 beforeModel Hook 从 Session 已保存的 skill-catalog context 恢复会话已知目录，与实时目录比较。首次追加完整 snapshot，以后只追加 unseen delta；发送名称、描述、revision 与 removed，不发送路径或正文。空闲会话不广播、不触发生成；变化在下一次模型请求前进入该会话。System Prompt 只有固定使用规则，不包含动态目录；固定 name:string 的 load_skill 始终注册，执行时验证目录成员，工具 Schema 不因增删而改变。
+
+每个 Run 创建独立的 Skill Loading State。beforeModel 从可见且完整配对的 load_skill 成功结果恢复版本；同批次后续加载也能去重。相同版本返回 already_in_context，新版本返回 instructions/revision，必要时含 supersedes。没有成功全文结果、全文被移出上下文或异常 Run 包装的记录不建立去重状态。状态不跨会话共享。正文作为普通工具结果持久化；旧正文不从历史删除，最新目录/加载结果说明其更新或失效。
+
+`agent/agent.ts` 注入 Skill 目录 Hook 和加载状态 Hook，Runtime 不包含 Skill 逻辑。UI、RPC 契约、ContextBuilder 的标准消息组装逻辑保持不变；Session 只对模型投影内部事件。
+
+第一版不提供资源读取、脚本执行、斜杠 UI 或自动压缩。allowed-tools 不执行，不表示权限控制。诊断可从 Manager 目录状态读取；宿主忽略 stdio，设置页尚不能展示诊断。实际模型选择和遵循规范的质量需用真实任务验收。

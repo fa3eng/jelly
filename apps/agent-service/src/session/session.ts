@@ -1,9 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import type { AgentMessage, AgentRunOptions, AgentStreamItem } from '@jelly/agent-runtime';
+import { contextToMessage, type RuntimeContext } from '@jelly/agent-runtime';
 import type { AgentOutputEvent } from '@jelly/domain';
 import type { JsonlStore } from './jsonl-store';
 import {
   messageSchema,
+  runtimeContextSchema,
   type FinishedStatus,
   type SessionRecord,
   type StoredMessage,
@@ -13,6 +15,10 @@ interface Run {
   id: string;
   status: 'running' | FinishedStatus;
   messages: StoredMessage[];
+  entries: (
+    | { type: 'message'; message: StoredMessage }
+    | { type: 'context'; context: RuntimeContext }
+  )[];
 }
 
 interface RunInput {
@@ -41,13 +47,17 @@ function restore(records: SessionRecord[]) {
     if (record.type === 'session-created') throw new Error('重复的会话头');
     if (record.type === 'run-started') {
       if (runs.has(record.runId)) throw new Error('重复的运行 id');
-      runs.set(record.runId, { id: record.runId, status: 'running', messages: [] });
+      runs.set(record.runId, { id: record.runId, status: 'running', messages: [], entries: [] });
       continue;
     }
     const run = runs.get(record.runId);
     if (!run || run.status !== 'running') throw new Error('会话记录的运行顺序错误');
-    if (record.type === 'message-added') run.messages.push(record.message);
-    else run.status = record.status;
+    if (record.type === 'message-added') {
+      run.messages.push(record.message);
+      run.entries.push({ type: 'message', message: record.message });
+    } else if (record.type === 'context-added') {
+      run.entries.push({ type: 'context', context: record.context });
+    } else run.status = record.status;
   }
   return {
     id: header.sessionId,
@@ -63,17 +73,33 @@ function restore(records: SessionRecord[]) {
  * @returns 正常运行保留原协议消息；异常运行作为带状态的历史记录说明提供。
  */
 function toHistory(run: Run): AgentMessage[] {
-  if (run.status === 'completed') return run.messages;
-  return [
-    {
+  if (run.status === 'completed')
+    return run.entries.map((entry) =>
+      entry.type === 'message' ? entry.message : contextToMessage(entry.context),
+    );
+  const history: AgentMessage[] = [];
+  let pending: StoredMessage[] = [];
+  const flush = () => {
+    if (!pending.length) return;
+    history.push({
       role: 'user',
       content: [
         `【历史运行记录，非新的用户请求】runId=${run.id}，状态=${run.status}。`,
         '以下是已保存的消息。记录可能不完整，不能据此认定工具未执行，也不要自动重放工具。',
-        JSON.stringify(run.messages),
+        JSON.stringify(pending),
       ].join('\n'),
-    },
-  ];
+    });
+    pending = [];
+  };
+  for (const entry of run.entries) {
+    if (entry.type === 'message') pending.push(entry.message);
+    else {
+      flush();
+      history.push(contextToMessage(entry.context));
+    }
+  }
+  flush();
+  return history;
 }
 
 /**
@@ -115,7 +141,9 @@ export function createSessionManager(store: JsonlStore) {
    * @returns 历史消息与本轮输入，供 execute 创建 Loop 流。
    * @throws 会话被占用、Run ID 重复、存在遗留运行，或读写失败。
    */
-  async function beginRun(input: RunInput): Promise<AgentMessage[]> {
+  async function beginRun(
+    input: RunInput,
+  ): Promise<{ history: AgentMessage[]; contexts: RuntimeContext[] }> {
     const { sessionId: id, runId, prompt } = input;
     if (active.has(id)) throw new Error('当前会话正在运行');
     active.set(id, runId);
@@ -131,7 +159,12 @@ export function createSessionManager(store: JsonlStore) {
       await store.append(id, { type: 'run-started', runId, at: now() });
       started = true;
       await store.append(id, { type: 'message-added', runId, message: user, at: now() });
-      return [...history, user];
+      return {
+        history: [...history, user],
+        contexts: session.runs.flatMap((run) =>
+          run.entries.flatMap((entry) => (entry.type === 'context' ? [entry.context] : [])),
+        ),
+      };
     } catch (cause) {
       try {
         // 开始标记已落盘时，准备阶段失败也要结束本轮，避免一直残留 running。
@@ -174,12 +207,19 @@ export function createSessionManager(store: JsonlStore) {
     options?: AgentRunOptions,
   ): AsyncGenerator<AgentOutputEvent> {
     options?.signal?.throwIfAborted();
-    const history = await beginRun(input);
+    const { history, contexts } = await beginRun(input);
     let status: FinishedStatus = 'interrupted';
     try {
-      for await (const item of execute(history, options)) {
+      for await (const item of execute(history, { ...options, contexts })) {
         if (item.type === 'message') {
           await appendMessage(input.sessionId, input.runId, item.message);
+        } else if (item.type === 'context-added') {
+          await store.append(input.sessionId, {
+            type: 'context-added',
+            runId: input.runId,
+            context: runtimeContextSchema.parse(item.context),
+            at: now(),
+          });
         } else {
           options?.signal?.throwIfAborted();
           yield item;

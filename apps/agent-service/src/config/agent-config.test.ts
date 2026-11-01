@@ -9,6 +9,14 @@ const environment = {
 };
 
 describe('Agent proxy configuration', () => {
+  it('defaults skills to the docs root and accepts an absolute development override', () => {
+    expect(loadAgentConfig(environment).skillsDirectory).toBe('/tmp/docs/.jelly/skills');
+    expect(
+      loadAgentConfig({ ...environment, JELLY_SKILLS_DIRECTORY: '/tmp/custom-skills' })
+        .skillsDirectory,
+    ).toBe('/tmp/custom-skills');
+    expect(() => loadAgentConfig({ ...environment, JELLY_SKILLS_DIRECTORY: 'relative' })).toThrow();
+  });
   it('loads an explicit proxy and its client-only CA path', () => {
     const config = loadAgentConfig({
       ...environment,

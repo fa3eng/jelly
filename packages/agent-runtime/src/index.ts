@@ -15,3 +15,10 @@ export {
 export { defineTool, type Tool, type ToolResult } from './tools/tool';
 export { createToolRegistry, type ToolRegistry } from './tools/registry';
 export { createContextBuilder, type ContextBuilder, type ModelContext } from './context/context';
+export {
+  contextToMessage,
+  type RuntimeContext,
+  type HookEffect,
+  type BeforeModelHook,
+  type AgentHooks,
+} from './agent/hooks';

@@ -14,6 +14,72 @@ async function collect(stream: AsyncIterable<unknown>) {
 }
 
 describe('Session lifecycle', () => {
+  it('persists internal contexts without displaying them and restores them after cancellation', async () => {
+    const { id } = await sessions.create('内部上下文');
+    const controller = new AbortController();
+    const stream = sessions.run(
+      { sessionId: id, runId: randomUUID(), prompt: '真正的用户请求' },
+      async function* () {
+        yield {
+          type: 'context-added' as const,
+          context: { kind: 'test', content: 'INTERNAL_CATALOG', data: { version: 1 } },
+        };
+        yield { type: 'text-delta', delta: '片段' };
+        controller.signal.throwIfAborted();
+      },
+      { signal: controller.signal },
+    );
+    await stream.next();
+    controller.abort();
+    await expect(stream.next()).rejects.toThrow();
+    expect((await sessions.view(id)).runs[0]?.userText).toBe('真正的用户请求');
+    const restored = createSessionManager(await createJsonlStore(directory));
+    await restored.initialize();
+    let seen = false;
+    await collect(
+      restored.run(
+        { sessionId: id, runId: randomUUID(), prompt: '继续' },
+        async function* (history, options) {
+          seen = true;
+          expect(options?.contexts).toEqual([
+            { kind: 'test', content: 'INTERNAL_CATALOG', data: { version: 1 } },
+          ]);
+          expect(
+            history.some(
+              (message) =>
+                message.role === 'user' &&
+                typeof message.content === 'string' &&
+                message.content.startsWith('【Jelly 运行环境信息'),
+            ),
+          ).toBe(true);
+          yield { type: 'message', message: { role: 'assistant', content: '继续' } };
+        },
+      ),
+    );
+    expect(seen).toBe(true);
+  });
+
+  it('does not resume execution if saving internal context fails', async () => {
+    const { id } = await sessions.create('持久化失败');
+    let resumed = false;
+    const manager = createSessionManager({
+      ...store,
+      async append(sessionId, record) {
+        if (record.type === 'context-added') throw new Error('context write failed');
+        return store.append(sessionId, record);
+      },
+    });
+    await expect(
+      collect(
+        manager.run({ sessionId: id, runId: randomUUID(), prompt: '开始' }, async function* () {
+          yield { type: 'context-added' as const, context: { kind: 'test', content: 'notice' } };
+          resumed = true;
+        }),
+      ),
+    ).rejects.toThrow('context write failed');
+    expect(resumed).toBe(false);
+    expect((await manager.view(id)).runs[0]?.status).toBe('error');
+  });
   let directory: string;
   let store: Awaited<ReturnType<typeof createJsonlStore>>;
   let sessions: ReturnType<typeof createSessionManager>;

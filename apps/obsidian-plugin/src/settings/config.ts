@@ -46,6 +46,7 @@ export function serviceEnvironment(
     OPENAI_MODEL: model,
     JELLY_DOCS_DIRECTORY: vault,
     JELLY_SESSION_DIRECTORY: join(vault, '.jelly', 'sessions'),
+    JELLY_SKILLS_DIRECTORY: join(vault, '.jelly', 'skills'),
     DEEPSEEK_API_KEY: undefined,
     OPENAI_PROXY_URL: undefined,
     OPENAI_PROXY_CA_PATH: undefined,

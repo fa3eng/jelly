@@ -1,4 +1,4 @@
-import { isAbsolute } from 'node:path';
+import { isAbsolute, join } from 'node:path';
 import { z } from 'zod';
 
 const schema = z
@@ -12,6 +12,10 @@ const schema = z
       .enum(['none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'])
       .optional(),
     docsDirectory: z.string().refine(isAbsolute, 'JELLY_DOCS_DIRECTORY 必须是绝对路径'),
+    skillsDirectory: z
+      .string()
+      .refine(isAbsolute, 'JELLY_SKILLS_DIRECTORY 必须是绝对路径')
+      .optional(),
     systemPrompt: z.string().min(1).optional(),
     sessionDirectory: z.string().refine(isAbsolute, 'JELLY_SESSION_DIRECTORY 必须是绝对路径'),
   })
@@ -21,7 +25,7 @@ const schema = z
   });
 
 export function loadAgentConfig(env: Record<string, string | undefined>) {
-  return schema.parse({
+  const config = schema.parse({
     apiKey: env.OPENAI_API_KEY ?? env.DEEPSEEK_API_KEY,
     baseURL: env.OPENAI_BASE_URL,
     model: env.OPENAI_MODEL,
@@ -29,7 +33,12 @@ export function loadAgentConfig(env: Record<string, string | undefined>) {
     proxyCaPath: env.OPENAI_PROXY_CA_PATH,
     reasoningEffort: env.OPENAI_REASONING_EFFORT,
     docsDirectory: env.JELLY_DOCS_DIRECTORY,
+    skillsDirectory: env.JELLY_SKILLS_DIRECTORY,
     systemPrompt: env.JELLY_SYSTEM_PROMPT,
     sessionDirectory: env.JELLY_SESSION_DIRECTORY,
   });
+  return {
+    ...config,
+    skillsDirectory: config.skillsDirectory ?? join(config.docsDirectory, '.jelly', 'skills'),
+  };
 }
