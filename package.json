@@ -17,6 +17,7 @@
     "release:prepare": "node scripts/prepare-release.mjs"
   },
   "devDependencies": {
+    "happy-dom": "^21.0.4",
     "tsx": "4.23.15",
     "vite-plus": "0.3.3",
     "vitest": "4.1.11"

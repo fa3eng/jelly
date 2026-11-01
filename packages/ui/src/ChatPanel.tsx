@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type SyntheticEvent, type ReactNode } from 'react';
-import type { AssistantRunStatus, ChatMessage } from '@jelly/domain';
+import type { AssistantRunStatus, ChatMessage, QuestionReference } from '@jelly/domain';
 import { Dialog } from './Dialog';
+import { ReferenceAnchor } from './ReferenceAnchor';
 import { ChatIcon } from './ChatIcon';
 import { shouldSubmitOnEnter } from './composer-keys';
 
@@ -11,6 +12,11 @@ export interface ChatPanelProps {
   onInterrupt: () => void;
   /** 宿主提供的助手回复渲染器；共享 UI 不依赖 Obsidian。 */
   renderAssistant?: (message: ChatMessage) => ReactNode;
+  draft?: string;
+  onDraftChange?: (draft: string) => void;
+  composerContent?: ReactNode;
+  canSubmitWithoutPrompt?: boolean;
+  onOpenReference?: (reference: QuestionReference) => void;
 }
 
 const statusText: Record<AssistantRunStatus, string> = {
@@ -28,8 +34,15 @@ export function ChatPanel({
   onSubmit,
   onInterrupt,
   renderAssistant,
+  draft: controlledDraft,
+  onDraftChange,
+  composerContent,
+  canSubmitWithoutPrompt = false,
+  onOpenReference,
 }: ChatPanelProps) {
-  const [draft, setDraft] = useState('');
+  const [localDraft, setLocalDraft] = useState('');
+  const draft = controlledDraft ?? localDraft;
+  const setDraft = (value: string) => (onDraftChange ? onDraftChange(value) : setLocalDraft(value));
   const scrollContainer = useRef<HTMLDivElement>(null);
   const messageList = useRef<HTMLDivElement>(null);
   const followOutput = useRef(true);
@@ -51,10 +64,10 @@ export function ChatPanel({
   function handleSubmit(event: SyntheticEvent<HTMLFormElement>): void {
     event.preventDefault();
     const prompt = draft.trim();
-    if (!prompt || isBusy) return;
+    if ((!prompt && !canSubmitWithoutPrompt) || isBusy) return;
     followOutput.current = true;
     onSubmit(prompt);
-    setDraft('');
+    if (controlledDraft === undefined) setDraft('');
   }
 
   return (
@@ -96,7 +109,20 @@ export function ChatPanel({
             messages.map((message) => (
               <article className={`osc-message osc-message-${message.role}`} key={message.id}>
                 <div className="osc-message-label">{message.role === 'user' ? '你' : 'Jelly'}</div>
-                <div className="osc-message-content">
+                {!!message.references?.length && (
+                  <div className="osc-message-references" aria-label="本次提问的引用">
+                    {message.references.map((reference) => (
+                      <div className="osc-sent-reference" key={reference.id}>
+                        <ReferenceAnchor reference={reference} onOpen={onOpenReference} />
+                        {reference.question && <p>{reference.question}</p>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div
+                  className="osc-message-content"
+                  hidden={message.role === 'user' && !message.content}
+                >
                   {message.role === 'assistant' && !message.content ? (
                     <span className="osc-thinking">正在思考…</span>
                   ) : message.role === 'assistant' && renderAssistant ? (
@@ -111,13 +137,14 @@ export function ChatPanel({
         </div>
       </div>
       <form className="osc-chat-composer" onSubmit={handleSubmit}>
+        {composerContent}
         <textarea
           aria-label="输入问题"
           placeholder="问一个问题，或继续你的思考…"
           rows={3}
           value={draft}
           onChange={(event) => setDraft(event.currentTarget.value)}
-          disabled={isBusy}
+          disabled={status === 'restoring'}
           onKeyDown={(event) => {
             if (
               !isBusy &&
@@ -158,7 +185,7 @@ export function ChatPanel({
               className="osc-send-button"
               title="发送消息（Enter）"
               aria-label="发送消息"
-              disabled={!draft.trim() || isBusy}
+              disabled={(!draft.trim() && !canSubmitWithoutPrompt) || isBusy}
             >
               <ChatIcon name="send" />
             </button>

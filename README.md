@@ -5,6 +5,7 @@ Jelly is a desktop Obsidian AI assistant named after the author's cat. Chat with
 ## Features
 
 - Streaming conversations with Markdown replies and local conversation history.
+- Collect Markdown selections with questions, edit them in the sidebar, and send them together without changing the original notes.
 - File tools limited to the current vault, with path and file-type checks.
 - Local text extraction from PDFs; scanned PDFs need OCR elsewhere.
 - Markdown creation, version-checked editing, and deletion when requested.
@@ -20,7 +21,7 @@ Jelly requires Obsidian 1.11.4 or later and a desktop installer with Node 20.19 
 
 ## Privacy, costs and file access
 
-Your API key is stored through Obsidian SecretStorage. The endpoint and model are stored in the plugin configuration. Conversations, including tool results, are stored locally in `<vault>/.jelly/sessions/`.
+Your API key is stored through Obsidian SecretStorage. The endpoint, model and unsent question-reference drafts are stored in the plugin configuration. Conversations, including sent reference snapshots and tool results, are stored locally in `<vault>/.jelly/sessions/`.
 
 Model requests send conversation context and any file content used by the assistant to the provider you configure. The provider may require an account and charge usage fees; review its data policies before using private notes. Jelly's local service listens only on `127.0.0.1` and uses a random launch token for plugin requests.
 
@@ -43,6 +44,7 @@ Jelly 是一个桌面端 Obsidian AI 助手，支持围绕本地 Markdown 资料
 ## 功能
 
 - 在 Obsidian 侧栏中进行多轮对话，流式显示 Markdown 回答。
+- 在 Markdown 实时预览或源码模式中选中文字，点击浮层「侧栏提问」或使用右键菜单，积累多条提问引用后统一发送。
 - 由 Agent 按需列出资料，读取当前 Vault 中的 Markdown 与文本型 PDF。
 - 按用户要求新建、编辑或删除 Markdown 文件。
 - 新建、切换和恢复会话；对话与工具记录保存在本地 JSONL 文件中。
@@ -50,6 +52,8 @@ Jelly 是一个桌面端 Obsidian AI 助手，支持围绕本地 Markdown 资料
 - 通过 OpenAI-compatible Chat Completions 接口调用支持流式输出和工具调用的模型。
 
 当前仅支持桌面端。发行版使用 Obsidian 自带的 Node 运行环境启动独立 Agent Service，无需用户另装 Node.js。安装后在 **设置 → Jelly** 填写 API Key、API 地址和模型名称，保存后自动启动。以后启用插件会自动读取配置并启动服务。
+
+提问引用不会修改笔记或留下文内批注。浮层中 Enter 换行，⌘/Ctrl + Enter 加入待发送；Esc 或点击外部会收起浮层并保留未完成草稿。侧边栏可修改问题、移除引用、返回原文，也可不填总问题直接发送全部引用。草稿按会话保存在插件配置中，发送时立即移走本批草稿，失败或取消时恢复，并保留生成期间新写的内容；已发送的原文快照随聊天历史保存。引用只显示可回跳的来源锚点，不重复展示原文；「直接提问」暂仅保留入口，后续接入临时问答。PDF 选区暂不支持。
 
 ## 开发与运行
 

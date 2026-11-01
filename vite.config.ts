@@ -1,7 +1,15 @@
 import { defineConfig } from 'vite-plus';
+import { fileURLToPath } from 'node:url';
 
 export default defineConfig({
   defaultPackage: './apps/obsidian-plugin',
+  test: {
+    alias: {
+      obsidian: fileURLToPath(
+        new URL('./apps/obsidian-plugin/src/test-support/obsidian.ts', import.meta.url),
+      ),
+    },
+  },
   fmt: {
     ignorePatterns: [
       '**/dist/**',

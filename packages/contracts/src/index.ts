@@ -2,6 +2,30 @@ import { oc, eventIterator, type ContractRouterClient } from '@orpc/contract';
 import { z } from 'zod';
 
 const sessionIdInput = z.object({ sessionId: z.uuid() });
+const positionSchema = z.object({ line: z.int().min(0), ch: z.int().min(0) });
+export const questionReferenceSchema = z
+  .object({
+    id: z.uuid(),
+    path: z.string().min(1).max(2000),
+    text: z.string().min(1).max(20_000),
+    from: positionSchema,
+    to: positionSchema,
+    question: z.string().max(4000),
+  })
+  .refine(({ from, to }) => from.line < to.line || (from.line === to.line && from.ch < to.ch), {
+    message: '引用选区范围不合法',
+  });
+export const questionReferencesSchema = z
+  .array(questionReferenceSchema)
+  .max(30)
+  .refine(
+    (references) =>
+      references.reduce(
+        (length, reference) => length + reference.text.length + reference.question.length,
+        0,
+      ) <= 120_000,
+    { message: '引用总长度超过限制' },
+  );
 const sessionSummarySchema = z.object({
   id: z.uuid(),
   title: z.string(),
@@ -12,14 +36,20 @@ const runViewSchema = z.object({
   status: z.enum(['running', 'completed', 'cancelled', 'interrupted', 'error']),
   userText: z.string(),
   assistantText: z.string(),
+  references: questionReferencesSchema.optional(),
 });
 const sessionViewSchema = sessionSummarySchema.extend({ runs: z.array(runViewSchema) });
 
-export const chatGenerateInputSchema = z.object({
-  sessionId: z.uuid(),
-  runId: z.uuid(),
-  prompt: z.string().trim().min(1),
-});
+export const chatGenerateInputSchema = z
+  .object({
+    sessionId: z.uuid(),
+    runId: z.uuid(),
+    prompt: z.string().trim(),
+    references: questionReferencesSchema.optional(),
+  })
+  .refine(({ prompt, references }) => !!prompt || !!references?.length, {
+    message: '请输入问题或添加提问引用',
+  });
 export const chatGenerateOutputSchema = z.object({ text: z.string() });
 export const chatStreamEventSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('text-delta'), delta: z.string() }),
