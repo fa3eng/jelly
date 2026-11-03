@@ -43,6 +43,10 @@ confirmed:
     by: 方阿森
     at: 2026-11-04
     source: "JELLY-5 评论：文案不用写这么细；彻底删除不可恢复要写明白"
+  - decision: "用户确认本 PRD 可以进入架构方案"
+    by: 方阿森
+    at: 2026-11-04
+    source: "JELLY-5 评论：我没有别的问题了，推进到下一步吧"
 supersedes: null
 ---
 
@@ -217,5 +221,5 @@ flowchart TD
 ## 交接
 
 - 下一阶段：架构方案
-- 进入条件：本 PRD 已确认（2026-11-03、2026-11-04）
+- 进入条件：已满足。用户在 2026-11-04 明确同意推进（见 `confirmed` 最后一条）
 - 需要读：本文件、`images/`、`docs/architecture/current-runtime.md`
