@@ -15,6 +15,36 @@ JELLY-5 要给会话补改名、归档、还原和彻底删除。现在的持久
 - `updatedAt` 取最后一条记录的时间（`session.ts:55`），任何写入都会影响排序。
 - `list()` 已经会读取全部会话文件（`session.ts:222-227`），再加一次小文件读取成本可忽略。
 
+## 数据模型：前后对比
+
+现在会话只有一个文件，标题写死在头记录里，没有地方放归档状态。
+
+```mermaid
+flowchart LR
+  subgraph now[现在]
+    H1["session-created<br/>title 写一次"]
+    R1["run-started / message-added / run-finished"]
+    H1 --> R1
+  end
+  subgraph later[之后]
+    H2["session-created<br/>不再改写"]
+    R2["run-started / message-added / run-finished<br/>格式不变"]
+    M2["sessions/uuid.json<br/>title? archivedAt?<br/>新增"]
+    S2["SessionSummary<br/>+ archivedAt?"]
+    H2 --> R2
+    R2 -. "updatedAt" .-> S2
+    M2 -. "覆盖标题 / 归档状态" .-> S2
+  end
+```
+
+字段变化只有两处：
+
+| 对象 | 现在 | 之后 |
+| --- | --- | --- |
+| `SessionSummary` | `id / title / updatedAt` | 加 `archivedAt?: string` |
+| `SessionMeta`（新文件） | 不存在 | `version / title? / archivedAt?` |
+| 四种 JSONL 记录 | 不变 | 不变 |
+
 ## 备选
 
 ### 甲：元数据写成 JSONL 记录
