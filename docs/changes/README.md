@@ -1,6 +1,6 @@
 # 单次改动材料（docs/changes）
 
-本目录保存**每个需求一份**的阶段材料，与 Multica issue 一一对应。它回答"这次改什么、为什么、怎么验证"，而不是"系统现在长什么样"——后者见 [`docs/architecture/`](../architecture/README.md)。
+本目录保存**每个需求一份**的阶段材料，与 Multica issue 一一对应；材料随任务分支提交进仓库，不只在 issue 附件里。它回答"这次改什么、为什么、怎么验证"，而不是"系统现在长什么样"——后者见 [`docs/architecture/`](../architecture/README.md)。
 
 ## 目录约定
 
@@ -36,6 +36,13 @@ docs/changes/<issue-identifier>-<slug>/
 `intent.md` 就是 PRD。用 `ruanyifeng-writing` 的单线结构写：一篇只讲一件事，短句短段，小点展开。每个关键流程/状态配 Mermaid 图或 Paper 原型，图前说看什么，图后说所以怎么定。不要写代码核对记录、基线缺口、工具细节；这些不进 PRD。
 
 产品经理与设计师已合并为「Jelly 产品设计师」：PRD 和原型在同一次「需求整理」里交付，人工确认后再进架构方案。
+
+## 入库
+
+- 每个阶段把产物提交到任务分支 `codex/<task>`，PR 里带上 `docs/changes/<id>/`。
+- 下一个阶段 checkout 同一分支读文件，不依赖聊天或 issue 附件。
+- 仓库是公开的，PRD、设计细节、验收标准会随 PR 公开；敏感需求另用私有存储。
+- 教程、历史计划、旧决策草稿不进本目录，也不进产品仓库。
 
 ## 版本与确认
 

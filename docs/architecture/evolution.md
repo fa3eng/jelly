@@ -19,4 +19,13 @@
 
 ## 记录
 
-> 暂无记录。首次出现重要结构变化时按上面的格式追加，并同步更新 `current-runtime.md`。
+## 2026-11-04 · 文档分层与单次改动入库
+
+- 之前：`docs/` 采用白名单，只有少数文档入库；每个需求的 PRD/Spec 只留在本地或 issue 附件，下一阶段在 `develop` 看不到。
+- 之后：当前架构、ADR、产品边界和 `docs/changes/<id>/` 分层；PRD/Spec/Plan/Verification 随任务分支入库、随 PR review；教程、历史计划和旧决策草稿移到仓库外备份。
+- 原因：跨阶段交接依赖聊天和附件，PR 缺少需求上下文；历史教程和当前架构混在一起。
+- 关联需求：`docs/changes/JELLY-5-session-delete-and-ui/`
+- ADR：`docs/architecture/decisions/0003-product-boundaries-and-docs.md`
+- PR / 合入提交：PR #5
+- 状态：已落地（文档规则）；代码未变
+- 影响与迁移：仓库公开范围扩大到产品文档；敏感需求需要私有存储。旧教程已备份到仓库外，不参与构建。

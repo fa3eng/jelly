@@ -2,6 +2,7 @@
 
 - 开始任务前阅读 [分支管理与发版约定](docs/development-workflow.md)。
 - 每个需求使用 Multica issue 与 `docs/changes/<issue-id>-<slug>/` 一份材料；阶段、责任人与人工确认点见 [单次改动材料](docs/changes/README.md)。
+- PRD、Spec、Plan、Verification 随任务分支提交进仓库，不能只发 issue 附件；教程、历史计划和旧决策草稿不进仓库。
 - 架构现状、ADR 与演进记录见 [架构资料索引](docs/architecture/README.md)；实现 PR 同时更新受影响的架构文档，无结构变化时在 PR 描述写理由。
 - PR 描述必须包含关联 issue、`docs/changes/` 路径、验证命令与结果、风险/回滚。
 - 常规任务从最新的 `origin/develop` 创建 `codex/<任务名>` 分支；并行任务使用各自的分支和 Worktree。

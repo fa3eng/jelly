@@ -6,7 +6,8 @@
 
 | 文件 | 内容 | 维护者 |
 | --- | --- | --- |
-| [`current-runtime.md`](./current-runtime.md) | 当前模块图、请求时序、宿主与 Service 边界、Session / JSONL、Runtime Hooks、Skills 等 | 开发者随实现更新，架构师审阅 |
+| [`current-runtime.md`](./current-runtime.md) | 当前模块图、请求时序、宿主与 Service 边界、Session / JSONL 等已实现事实 | 开发者随实现更新，架构师审阅 |
+| [`product-charter.md`](./product-charter.md) | 产品是什么、模块边界、技术克制与文档分层 | 产品设计师 / 架构师，长期原则 |
 | [`decisions/`](./decisions/) | 长期影响较大的取舍（ADR） | 架构师提案，用户确认后 `accepted` |
 | [`evolution.md`](./evolution.md) | 重要结构变化的"之前 → 之后"、原因、关联需求/ADR/PR | 开发者或架构师在合入时更新 |
 
@@ -19,6 +20,8 @@
 5. **实现 PR 携带对应架构更新**，与代码一起审查、合入；没有结构变化时在 PR 描述写理由。
 6. **每份架构基线标记对应提交。** 并行任务合入前核对最新 `origin/develop`，避免不同分支用各自版本覆盖整体架构。
 7. 不依靠"让某个 Agent 记住所有事情"维护架构；维护职责落在每次任务和 PR 上。
+8. **教程、历史计划和旧决策草稿不进产品仓库。** 它们放仓库外备份；需要在仓库里留痕时，写进 `evolution.md` 的演进记录，而不是混进当前架构。
+9. **单次改动的 PRD / Spec / Plan / Verification 跟代码一起入库、一起 review。** 仓库是公开的，敏感材料另用私有存储。
 
 ## ADR 状态
 
