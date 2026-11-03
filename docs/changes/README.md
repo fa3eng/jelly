@@ -6,8 +6,8 @@
 
 ```
 docs/changes/<issue-identifier>-<slug>/
-  intent.md        需求整理（产品经理）
-  spec.md          方案与设计（设计师 + 架构师）
+  intent.md        PRD（产品设计师：需求 + 原型）
+  spec.md          方案（架构师）
   plan.md          实现计划（规划师）
   verification.md  验证与审查（审查者）
 ```
@@ -21,8 +21,7 @@ docs/changes/<issue-identifier>-<slug>/
 
 | 阶段 | 状态（Multica 工作流列） | 责任人 | 产物 | 退出条件 |
 | --- | --- | --- | --- | --- |
-| 需求整理 | 需求整理 | 产品经理 | `intent.md` | 用户确认问题、目标与范围 |
-| 交互设计 | 设计中 | 设计师 | `spec.md` 交互部分 + Paper 稿 | 状态覆盖完整，交互可确认 |
+| 需求与设计 | 需求整理 | 产品设计师 | `intent.md` PRD + Paper 原型 | 用户确认问题、范围、交互与原型 |
 | 架构方案 | 架构方案 | 架构师 | `spec.md`、ADR 提案 | 备选方案、兼容与测试策略完整 |
 | 方案确认 | 方案待确认 | 人 | — | 用户确认交互与重大架构选择 |
 | 实现规划 | 规划中 | 规划师 | `plan.md` | 步骤可独立验证 |
@@ -32,6 +31,12 @@ docs/changes/<issue-identifier>-<slug>/
 | 人工验收 | 待人工验收 | 人 | — | 真实 Obsidian 宿主体验通过 |
 | 完成 | 完成 | — | — | PR 合入 `develop` |
 
+## PRD 写法
+
+`intent.md` 就是 PRD。用 `ruanyifeng-writing` 的单线结构写：一篇只讲一件事，短句短段，小点展开。每个关键流程/状态配 Mermaid 图或 Paper 原型，图前说看什么，图后说所以怎么定。不要写代码核对记录、基线缺口、工具细节；这些不进 PRD。
+
+产品经理与设计师已合并为「Jelly 产品设计师」：PRD 和原型在同一次「需求整理」里交付，人工确认后再进架构方案。
+
 ## 版本与确认
 
 每份材料顶部 frontmatter 至少记录：
@@ -40,7 +45,7 @@ docs/changes/<issue-identifier>-<slug>/
 change: JELLY-12
 stage: intent            # intent | spec | plan | verification
 status: draft            # draft | in-review | approved | superseded
-owner: Jelly 产品经理
+owner: Jelly 产品设计师
 baseline: <origin/develop 或 PR HEAD 的提交 SHA>
 inputs: []
 confirmed: []            # 只记录用户真实确认的决定、日期与来源
