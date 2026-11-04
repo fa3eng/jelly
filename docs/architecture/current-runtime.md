@@ -126,3 +126,9 @@ Service 将以下工具注册给 Runtime，不依赖 Obsidian API：
 解析使用固定版本 `unpdf@1.6.2` 内置的 PDF.js，已验证 Node 20.19.6；不依赖系统 Poppler、Python 或 Canvas，不调用模型 API。解析任务取消或退出时销毁资源；当前在 Service 内执行，不提供独立解析进程或强制 CPU 超时隔离。加密、损坏、非普通文件或无效页码返回工具失败，不改变原文件。PDF 列举及读取已具备，跨 PDF 正文搜索和持久化解析索引暂未实现。
 
 当前不包含语义检索、Skills、MCP 或自动上下文压缩。这些能力不属于现有接口的隐含保证。
+
+## L1 测试边界
+
+`pnpm test:e2e` 从 `apps/obsidian-plugin/e2e/` 启动构建后的独立 Service，经真实 HTTP/oRPC 调用，使用回环 SSE 假模型和每次新建的隔离 Vault。它覆盖模型流、文件工具、JSONL、取消与进程恢复，未改变生产模块或配置入口。测试只注入现有 Service 环境变量，输出保存在 gitignored 的 `.e2e-artifacts/`。
+
+这条链路不启动 Obsidian，因此不覆盖 UI、SecretStorage 或 utilityProcess 的宿主边界。真实宿主自动化是后续 L2；当前不把服务重启测试等同于 Obsidian 重启测试。执行命令和限制见 `docs/development-workflow.md`。
