@@ -1,0 +1,61 @@
+name: Agent PR comment
+
+# 本地 agent 共用维护者的 GitHub 账号，直接 `gh pr comment` 会看起来像本人在讨论。
+# 用这个 workflow 代发，评论显示为 github-actions[bot]，正文由输入决定。
+#
+# 用法（workflow 需要在默认分支 develop 上）：
+#   gh workflow run agent-pr-comment.yml \
+#     -f pr=5 \
+#     -f agent="Jelly 方案评审" \
+#     -f body="$(cat review.md)"
+#
+# 只允许有写权限的人手动触发，不会随 PR 事件自动运行。
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: Pull request number
+        required: true
+        type: string
+      body:
+        description: Comment body in Markdown
+        required: true
+        type: string
+      agent:
+        description: Agent name shown in the attribution line
+        required: false
+        type: string
+
+permissions:
+  pull-requests: write
+
+jobs:
+  comment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post comment
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ inputs.pr }}
+          AGENT_NAME: ${{ inputs.agent }}
+          COMMENT_BODY: ${{ inputs.body }}
+        run: |
+          set -euo pipefail
+          if ! [[ "$PR_NUMBER" =~ ^[0-9]+$ ]]; then
+            echo "pr must be a pull request number" >&2
+            exit 1
+          fi
+          if [ -z "$COMMENT_BODY" ]; then
+            echo "body must not be empty" >&2
+            exit 1
+          fi
+          {
+            printf '%s\n' "$COMMENT_BODY"
+            printf '\n'
+            if [ -n "$AGENT_NAME" ]; then
+              printf -- '---\n_由 %s（本地 agent）生成。_\n' "$AGENT_NAME"
+            fi
+            printf '<!-- jelly-agent-comment -->\n'
+          } > comment.md
+          gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --body-file comment.md
