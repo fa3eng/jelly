@@ -5,6 +5,7 @@ dist/
 .vite/
 .vite-temp/
 .superpowers/
+.e2e-artifacts/
 .DS_Store
 .obsidian/
 *.tsbuildinfo
@@ -19,6 +20,9 @@ dist/
 /docs/*
 !/docs/release-notes.md
 !/docs/development-workflow.md
+!/docs/changes/
+/docs/changes/*
+!/docs/changes/JELLY-6-e2e-harness/
 !/docs/architecture/
 /docs/architecture/*
 !/docs/architecture/current-runtime.md

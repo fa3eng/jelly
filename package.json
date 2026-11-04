@@ -11,6 +11,7 @@
     "agent-service:dev": "node --import tsx --watch apps/agent-service/src/index.ts",
     "agent-service:build": "pnpm --filter @jelly/agent-service build",
     "test": "vitest run",
+    "test:e2e": "node --import tsx --test apps/obsidian-plugin/e2e/service.e2e.ts",
     "check": "vp check",
     "format": "vp fmt",
     "licenses:generate": "node scripts/generate-notices.mjs",
