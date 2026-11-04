@@ -15,14 +15,8 @@ dist/
 **/.jelly/
 **/.aula/
 
-# Public documentation is opt-in. Local tutorials, plans and drafts stay on disk.
-/docs/*
-!/docs/release-notes.md
-!/docs/development-workflow.md
-!/docs/architecture/
-/docs/architecture/*
-!/docs/architecture/current-runtime.md
-!/docs/architecture/decisions/
-/docs/architecture/decisions/*
-!/docs/architecture/decisions/0001-monorepo-and-toolchain.md
-!/docs/architecture/decisions/0002-contract-rpc.md
+# Documentation is versioned with the code.
+# Tutorials and historical drafts stay outside the repository.
+/docs/tutorials/
+/docs/debugging/
+/docs/superpowers/
